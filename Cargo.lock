@@ -3181,6 +3181,7 @@ version = "0.14.0"
 dependencies = [
  "mailcraft-charset",
  "mailcraft-engine",
+ "mailcraft-host",
  "mailcraft-jmap",
  "mailcraft-mcp",
  "mailcraft-model",
@@ -3262,6 +3263,7 @@ dependencies = [
  "log",
  "mailcraft-engine",
  "mailcraft-i18n",
+ "mailcraft-jmap",
  "mailcraft-model",
  "mailcraft-net",
  "mailcraft-time",

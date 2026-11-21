@@ -3,10 +3,9 @@
 > **Last reviewed:** 2026-10-28 · **Last updated:** 2026-11-14 · **Change:** minor
 
 A JMAP account is one whose server speaks JMAP (RFC 8620 and RFC 8621) over HTTPS. MailCraft reads
-such an account in the browser build, takes what you change in its mail up to its server, and sends
-mail through it. The desktop app and the command line have no way to reach a
-JMAP server yet: the desktop app leaves such an account out of Send/Receive, and `mailcraft-cli
-sync` refuses it.
+such an account in the desktop app, on the command line (`mailcraft-cli sync`) and in the browser
+build, takes what you change in its mail up to its server, and sends mail through it. A Mailflare
+server (a mail service on Cloudflare Workers) is one: see [Mailflare](#mailflare).
 
 ## What works
 
@@ -79,7 +78,9 @@ What you write in a draft the server has stays on this computer.
 ## The password, or the access token
 
 The first Send/Receive asks for the account's password, or for its access token when the account
-says the server takes a bearer token. MailCraft keeps it in memory until you close the page, the
+says the server takes a bearer token (the desktop app's Add Account takes it on its JMAP page, and
+`mailcraft-cli sync` from the environment). MailCraft keeps it in memory until you close the page
+or the app, the
 server turns it down, the account's server address changes, the account is removed or another
 mailbox is opened; it is never written to the browser's storage, the mailbox or a file. A server
 that turns it down is not asked again by itself: its messages say so when you open them, and the
@@ -87,7 +88,37 @@ next Send/Receive you start asks for it again.
 
 ## Adding an account
 
-There is no JMAP page in Add Account yet. An account comes into the browser build in one of two ways:
+**In the desktop app**, File › Add Account: type the address, press Connect, and on the page that
+asks which kind of account it is, choose **JMAP server**. Give the server's name (or the address of
+its session, `https://…`), tick **This is a Mailflare server** for one, and paste the token (or,
+for a server that signs in with the account's password, tick that and type the password). Nothing
+is sent until Connect; then the account's first Send/Receive starts. A server's name alone stands for
+`https://<name>/.well-known/jmap` (RFC 8620 §2.2), or `https://<name>/jmap/session` for Mailflare.
+JMAP is HTTPS: there are no IMAP or SMTP ports to set, only port 443, and mail is sent over the same
+connection.
+
+Examples (the page shows them too, under Examples):
+
+| What | Server | How it signs in |
+|---|---|---|
+| Mailflare on Cloudflare's own address | `mailflare.<your-subdomain>.workers.dev` | Tick **This is a Mailflare server**; paste a Mailflare app password. The subdomain is under Workers & Pages in Cloudflare's dashboard. |
+| Mailflare on a domain of your own | `mail.example.org` (the address of Mailflare's web inbox) | As above. |
+| Stalwart, or another server that publishes `/.well-known/jmap` | `mail.example.org` | Tick **Sign in with my password** unless the server gave you a token. |
+| A session address you know | `https://mail.example.org/jmap/session` | Used as it is; `https://` only. |
+
+The account's address must be one the token or password may send as: the server's identity for
+that address is the one mail goes out as.
+
+**Not yet:** Fastmail. Its session names a download address on another host
+(`www.fastmailusercontent.com`) than the session's (`api.fastmail.com`), and MailCraft sends the
+credential to the session's own origin and nowhere else, so the connection is refused with that
+reason. Fastmail works over IMAP and SMTP in the meantime.
+
+**On the command line**, add it with `account.add` (below) and run `mailcraft-cli sync <mailbox>
+--account <address>` with the secret in the environment: `MAILCRAFT_JMAP_TOKEN` for a token,
+`MAILCRAFT_PASSWORD` for a password (never on the command line, which other users can list).
+
+**In the browser build** there is no JMAP page in Add Account yet. An account comes in one of two ways:
 
 - **The page names it.** A site that serves MailCraft can name the accounts of its users before
   MailCraft starts. Those it holds the credential for are never asked for one (see
@@ -100,7 +131,7 @@ There is no JMAP page in Add Account yet. An account comes into the browser buil
   ```
 
   `"bearer": true` beside `"session"` when the server takes an access token rather than the
-  password.
+  password, and `"sendsFromDraft": true` for a server that sends from the draft (Mailflare).
 
 The session address is the address of the server's session resource, such as
 `https://<server>/jmap/session`. It must be `https://` (plain `http://` only to this computer, for
@@ -109,7 +140,7 @@ trying things), and it must be the address itself: the browser build follows no 
 rather than redirecting to it. Where the server redirects, the account's Send/Receive says to give
 the session's own address.
 
-## What the server has to allow
+## What the server has to allow (browser build)
 
 The browser asks the server from the page's own address, so the server has to let that page in
 (CORS):
@@ -153,6 +184,39 @@ window.mailcraftJmap = {
   itself for that account until the owner asks for one.
 - Without `secret`, the owner types the credential as for any JMAP account.
 
+## Mailflare
+
+[Mailflare](https://github.com/hieunc229/mailflare) serves JMAP at `/jmap/session` (and
+`/.well-known/jmap`) of the address it runs at. MailCraft reads it, takes what you change up to it and
+sends through it, with what sets it apart from the RFC taken into account:
+
+- **The token.** Mailflare signs a mail program in with an API key that has the `jmap` scope: make one
+  in Mailflare under Settings › App passwords, and give it as the account's token (sent as a bearer
+  token). One key is one Mailflare user, with the mailboxes the key may reach.
+- **Its ids** have a `~` in them (`<mailbox>~inbox`, `<mailbox>~f~<folder>`, `msg~<id>`, and an
+  identity's id ends in its address), which RFC 8620 §1.2 doesn't allow. MailCraft takes an id of
+  letters, digits and `- _ ~ . @ + =` (never `.` or `..` alone), and writes each one in a patch as a
+  JSON Pointer token (`~` as `~0`, `/` as `~1`, RFC 6901), as every server should read it.
+- **Sending from the draft.** Mailflare takes new mail into a Drafts mailbox only, and sends a message
+  to whom its draft names, passing over the submission's envelope. A Mailflare account is set to
+  *send from the draft* (`sendsFromDraft`): its message is imported into Drafts, never Sent, with its
+  `Bcc` field, which is where Mailflare finds who gets a blind copy (it hands them to its sending
+  service as blind copies, and they are not in the message that goes); Mailflare then lets the draft
+  go and files its own copy in Sent, which the next Send/Receive brings down. Without the setting, a
+  message to such a server is held with its reason ("New messages can only be created in a Drafts
+  mailbox"), and nothing is sent.
+- **The address you add the account with** must be one of the Mailflare mailboxes the key may send
+  from: MailCraft sends as the identity the server has for that address.
+- **Its folders.** Mailflare lists each of its mailboxes as a folder with no role, with that mailbox's
+  Inbox, Sent, Drafts, Archive, Spam, Trash and the owner's folders inside it; that folder itself
+  stands for all the mail of the mailbox. When the key reaches one mailbox, MailCraft leaves that
+  folder out and shows the Inbox and the rest at the top, as for any other account, and reads each
+  message once. When it reaches two or more, each mailbox stays a folder of its own, with its
+  folders inside it.
+- **Cloudflare Access.** A mail program can't sign in to Cloudflare Access. If Access protects
+  Mailflare, let `/jmap/*` and `/.well-known/jmap` through (the app password still protects them),
+  or MailCraft is answered with Access's sign-in page instead of JMAP.
+
 ## Trying it
 
 The command line's tests have the JMAP server they test against, in the process, served over HTTP on
@@ -186,6 +250,10 @@ then serve it (`trunk serve` in `apps/mailcraft-web`) and open it: Send/Receive 
   credential, and takes the pieces in as they come.
 - The browser build is that host (`apps/mailcraft-web/src/jmap.rs`), over `fetch`
   (`apps/mailcraft-web/src/fetch.rs`).
+- The desktop app is one too (`apps/mailcraft/src/jmap_runner.rs`), each job on a thread of its own,
+  over this computer's sockets (`mailcraft_host::jmap`: one HTTPS exchange of `mailcraft_net::https`
+  at a time, no redirect followed, the system's trust for the certificate), and so is
+  `mailcraft-cli sync`.
 
 ## Revision history
 

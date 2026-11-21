@@ -978,7 +978,7 @@ fn a_jmap_account_keeps_its_setting_and_a_damaged_one_costs_only_itself() {
         name: "Ada".into(),
         email: "ada@example.org".into(),
         kind: AccountKind::Jmap,
-        jmap: Some(JmapServer { session: session.into(), bearer: true }),
+        jmap: Some(JmapServer { session: session.into(), bearer: true, ..Default::default() }),
         ..Default::default()
     };
     let json = serde_json::to_string(&account).unwrap();
@@ -1086,8 +1086,13 @@ fn a_jmap_servers_mail_moves_between_its_folders_and_its_deletion_is_queued() {
         assert_eq!(mb.move_message(theirs, ours).unwrap_err().to_string(), ONLY_SERVER_FOLDERS);
     }
     mb.folder_mut(ours).unwrap().server = None;
-    // (An id is 1 to 255 of the letters, digits, `-` and `_`; a folder is its own account's.)
+    // (An id is 1 to 255 of the letters, digits, `-` and `_`, and of the `~ . @ + =` some servers
+    // use, as Mailflare's `<mailbox>~<role>`; never `.` or `..`; a folder is its own account's.)
     assert!(crate::is_jmap_id("M-9_a") && crate::is_jmap_id(&"M".repeat(255)));
+    assert!(crate::is_jmap_id("mbx1~inbox") && crate::is_jmap_id("mbx1~ada@example.org") && crate::is_jmap_id("a+b=c"));
+    assert!(
+        !crate::is_jmap_id(".") && !crate::is_jmap_id("..") && !crate::is_jmap_id("a/b") && !crate::is_jmap_id("a%2F") && !crate::is_jmap_id("a\"b")
+    );
     assert_eq!((mb.jmap_mailbox(account, deleted), mb.jmap_mailbox(mb.accounts[0].id, deleted)), (Some("M2"), None));
     // Into one it has: moved here, and what the server last said of it stays, for the difference to go up.
     assert!(!mb.stays_out_of(theirs, deleted));

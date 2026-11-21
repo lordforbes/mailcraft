@@ -48,7 +48,7 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-const ACCOUNT: &str = r##"{"email": string, "displayName"?: string, "name"?: string (what the folder pane calls the account; empty: its address), "username"?: string, "incoming"?: {"host": string, "port"?: number, "security"?: "tls"|"starttls"|"none"} | null, "outgoing"?: same | null, "outgoingWithoutSignIn"?: bool (the outgoing server takes mail without a sign-in, a relay: it is never shown the password; not for an account that signs in on the provider's page), "auth"?: "password"|"oauth2" (oauth2: sign in on the provider's page), "provider"?: "microsoft"|"google", "clientId"?: string, "tenant"?: string, "directory"?: "organisation"|"personal" (which kind of Microsoft account signs in, when the sign-in said), "kind"?: "imap"|"local"|"microsoft"|"jmap"|"exchange" (microsoft: kept in step through Microsoft Graph, no mail servers; jmap: kept in step over JMAP, no mail servers; exchange: an Exchange server account, kept in step through Exchange Web Services, no mail servers), "ews"?: {"url": string (the https:// address of the server's Exchange Web Services, `…/EWS/Exchange.asmx`), "username"?: string (DOMAIN\user or a UPN; default the e-mail address), "trusted"?: string (the SHA-256 fingerprint of the one certificate trusted for this account besides the system's)} (an Exchange server account's server; the password is never a setting), "jmap"?: {"session": string (the https:// address of the server's JMAP session resource), "bearer"?: bool (the secret is a bearer token, not the account's password)} (a JMAP account's server; the secret is never a setting), "color"?: "#RRGGBB" | null (the account's colour: a dot by its name in the folder pane and a stripe on its mail in a list of more than one account's; a new account is given one of the palette's that no other has unless this says, null for none)}"##;
+const ACCOUNT: &str = r##"{"email": string, "displayName"?: string, "name"?: string (what the folder pane calls the account; empty: its address), "username"?: string, "incoming"?: {"host": string, "port"?: number, "security"?: "tls"|"starttls"|"none"} | null, "outgoing"?: same | null, "outgoingWithoutSignIn"?: bool (the outgoing server takes mail without a sign-in, a relay: it is never shown the password; not for an account that signs in on the provider's page), "auth"?: "password"|"oauth2" (oauth2: sign in on the provider's page), "provider"?: "microsoft"|"google", "clientId"?: string, "tenant"?: string, "directory"?: "organisation"|"personal" (which kind of Microsoft account signs in, when the sign-in said), "kind"?: "imap"|"local"|"microsoft"|"jmap"|"exchange" (microsoft: kept in step through Microsoft Graph, no mail servers; jmap: kept in step over JMAP, no mail servers; exchange: an Exchange server account, kept in step through Exchange Web Services, no mail servers), "ews"?: {"url": string (the https:// address of the server's Exchange Web Services, `…/EWS/Exchange.asmx`), "username"?: string (DOMAIN\user or a UPN; default the e-mail address), "trusted"?: string (the SHA-256 fingerprint of the one certificate trusted for this account besides the system's)} (an Exchange server account's server; the password is never a setting), "jmap"?: {"session": string (the https:// address of the server's JMAP session resource), "bearer"?: bool (the secret is a bearer token, not the account's password), "sendsFromDraft"?: bool (the server sends from the draft, not the envelope, and takes new mail into Drafts only, as Mailflare does: mail is imported into Drafts and goes with its Bcc field)} (a JMAP account's server; the secret is never a setting), "color"?: "#RRGGBB" | null (the account's colour: a dot by its name in the folder pane and a stripe on its mail in a list of more than one account's; a new account is given one of the palette's that no other has unless this says, null for none)}"##;
 
 fn has_server(s: &Session) -> Option<&'static str> {
     if s.mailbox.accounts.iter().any(|a| a.kind.has_server()) {
@@ -413,8 +413,13 @@ fn jmap_server(v: &Value, before: Option<&JmapServer>) -> Result<JmapServer, Cmd
                 Some(Value::Bool(bearer)) => server.bearer = *bearer,
                 Some(_) => return Err(bad("`jmap.bearer` is true or false")),
             }
+            match given.get("sendsFromDraft") {
+                None => {}
+                Some(Value::Bool(on)) => server.sends_from_draft = *on,
+                Some(_) => return Err(bad("`jmap.sendsFromDraft` is true or false")),
+            }
         }
-        Some(_) => return Err(bad("`jmap` is {\"session\": string, \"bearer\"?: bool}")),
+        Some(_) => return Err(bad("`jmap` is {\"session\": string, \"bearer\"?: bool, \"sendsFromDraft\"?: bool}")),
     }
     if given_session || before.is_none() {
         JmapServer::check_session(&server.session).map_err(|why| bad(format!("`jmap.session` {why}")))?;
@@ -549,7 +554,7 @@ fn jmap_origin(session: &str) -> String {
 /// What `account.list` says of a JMAP account's server: where it connects and whether the secret
 /// is a bearer token, not the rest of the session's address (it may hold the account's own).
 fn jmap_shown(a: &Account) -> Option<Value> {
-    a.jmap.as_ref().map(|server| json!({"server": server.problem().is_none().then(|| jmap_origin(&server.session)), "bearer": server.bearer}))
+    a.jmap.as_ref().map(|server| json!({"server": server.problem().is_none().then(|| jmap_origin(&server.session)), "bearer": server.bearer, "sendsFromDraft": server.sends_from_draft}))
 }
 
 /// What `account.list` says of an Exchange server account's server: where it connects and the

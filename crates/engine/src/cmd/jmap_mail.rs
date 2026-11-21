@@ -136,6 +136,7 @@ pub fn jmap_mail_request(s: &Session, account: Id, light: bool) -> Result<JmapMa
         email: a.email.clone(),
         session: server.session.clone(),
         bearer: server.bearer,
+        sends_from_draft: server.sends_from_draft,
         window,
         list_folders: !light || !listed || s.graph_listed_short.contains(&account),
         scope,

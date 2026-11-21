@@ -16,6 +16,10 @@
 //! - **A list with no mailbox in it** (none, or only views) is not complete either: an account always has
 //!   an Inbox, and a server that has lost its folders for a moment answers just so. The folders of an
 //!   account are not removed on its word.
+//! - **A lone container.** When the only mailbox at the top has no role and holds the Inbox (Mailflare's
+//!   way: one such mailbox for each of its mailboxes, standing for all its mail), it is left out and what
+//!   lies in it goes to the top, so that the folders look as any account's do and no message is read
+//!   twice ([`lone_container`]). Two or more at the top stay as they are.
 //! - **Counts** (`totalEmails`) are not part of the listing the engine takes in; [`listing_with_counts`] gives
 //!   the ones the answer states with a number, for the windows to be held against (the first of an id that is
 //!   listed twice, as the listing has it).
@@ -108,8 +112,35 @@ pub(super) fn listing_with_counts(answer: &Value) -> Option<(FolderListing, Hash
             well_known: false,
         });
     }
+    if let Some(container) = lone_container(&taken) {
+        counts.remove(&container);
+        taken.retain(|f| f.id != container);
+        for folder in &mut taken {
+            if folder.parent == container {
+                folder.parent.clear();
+            }
+        }
+    }
     // (A list with nothing in it is no listing of the account's mailboxes.)
     Some((FolderListing { complete: complete && !taken.is_empty(), folders: arranged(taken) }, counts))
+}
+
+/// The id of the one mailbox at the top of the tree when it is a container and nothing more: it is the
+/// only mailbox at the top, it has no role, and the Inbox lies right inside it. Mailflare lists each of
+/// its mailboxes so (`<mailbox>`, with `<mailbox>~inbox`, `~sent`… and the owner's folders inside it),
+/// and the container itself stands for all the mail of that mailbox, every message again. With one such
+/// mailbox the account's folders are shown as any other account's are, the Inbox and its fellows at the
+/// top, and the container is neither shown nor read. With two or more at the top, each stays, since it
+/// is what tells them apart.
+fn lone_container(folders: &[GraphFolder]) -> Option<String> {
+    let listed: HashSet<&str> = folders.iter().map(|f| f.id.as_str()).collect();
+    let mut tops = folders.iter().filter(|f| f.parent.is_empty() || !listed.contains(f.parent.as_str()) || f.parent == f.id);
+    let top = tops.next()?;
+    if tops.next().is_some() || top.kind != FolderKind::Custom {
+        return None;
+    }
+    let holds_inbox = folders.iter().any(|f| f.parent == top.id && f.id != top.id && f.kind == FolderKind::Inbox);
+    holds_inbox.then(|| top.id.clone())
 }
 
 /// `folders` with parents before the mailboxes in them, no mailbox its own ancestor and none deeper than

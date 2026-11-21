@@ -21,6 +21,7 @@ fn request() -> JmapMailRequest {
         email: ME.into(),
         session: SESSION.into(),
         bearer: true,
+        sends_from_draft: true,
         window: 300,
         list_folders: true,
         scope: JmapScope::Light { also: vec![format!("M-{ME}"), "M2".into()] },
@@ -233,7 +234,7 @@ fn debug_output_has_counts_only() {
     }
     assert_eq!(
         format!("{request:?}"),
-        "JmapMailRequest { account: 3, bearer: true, window: 300, list_folders: true, scope: \"light+2\", mailboxes: 2, known: 3, changes: 3, sends: 1, background: true }"
+        "JmapMailRequest { account: 3, bearer: true, sends_from_draft: true, window: 300, list_folders: true, scope: \"light+2\", mailboxes: 2, known: 3, changes: 3, sends: 1, background: true }"
     );
     assert_eq!(
         format!("{result:?}"),

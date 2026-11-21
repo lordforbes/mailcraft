@@ -180,6 +180,12 @@ impl Data {
         if self.profile.one_mailbox && mailboxes.len() > 1 {
             return Err(set_error("tooManyMailboxes", "an email lies in one mailbox on this server"));
         }
+        let drafts = |id: &String| self.mailboxes.iter().any(|m| &m.id == id && m.role.as_deref() == Some("drafts"));
+        if self.profile.drafts_only && !(mailboxes.len() == 1 && mailboxes.iter().all(drafts)) {
+            return Err(
+                json!({"type": "invalidProperties", "description": "New messages can only be created in a Drafts mailbox", "properties": ["mailboxIds"]}),
+            );
+        }
         let keywords = match entry.get("keywords") {
             None | Some(Value::Null) => BTreeSet::new(),
             Some(value) => truths(value).filter(|all| all.iter().all(|k| is_keyword(k))).ok_or_else(|| wrong("keywords"))?,
@@ -281,12 +287,24 @@ impl Data {
         // What becomes of the emails of the submissions made, answered as an `Email/set` of the same call.
         let before = self.state();
         let (mut updated, mut not_updated, mut destroyed) = (Map::new(), Map::new(), Vec::new());
-        for (key, patch) in on_update.into_iter().flatten() {
+        // A server that sends from the draft lets the draft go once it is sent, whatever it was asked.
+        let sent_drafts: Vec<String> = if self.profile.from_draft {
+            made.iter().filter(|(key, _)| key.starts_with('#')).map(|(_, email)| email.clone()).collect()
+        } else {
+            Vec::new()
+        };
+        let from_draft = self.profile.from_draft;
+        for (key, patch) in on_update.into_iter().flatten().filter(|_| !from_draft) {
             let Some(email) = made.get(key).cloned() else { continue };
             match self.update_email(&email, patch) {
                 Ok(changed) => updated.insert(email, changed),
                 Err(error) => not_updated.insert(email, error),
             };
+        }
+        for email in sent_drafts {
+            if self.remove(&email) {
+                destroyed.push(email);
+            }
         }
         for key in on_destroy {
             if let Some(email) = made.get(key).cloned()
@@ -343,6 +361,11 @@ impl Data {
         let email = email.and_then(|id| self.email(id)).ok_or_else(|| wrong("emailId"))?;
         let message = mailcraft_mime_model::parse(&email.raw);
         let (mail_from, rcpt_to) = match entry.get("envelope") {
+            // A server that sends from the draft: its own fields, Bcc too, whatever the envelope says.
+            _ if self.profile.from_draft => {
+                let from = if identity.email.starts_with("*@") { message.from.email.clone() } else { identity.email.clone() };
+                (from, message.recipients().map(|address| address.email.clone()).take(MAX_ENVELOPE).collect::<Vec<String>>())
+            }
             // The server's own, from the message's fields (RFC 8621 §7).
             None | Some(Value::Null) => {
                 let from = if identity.email.starts_with("*@") { message.from.email.clone() } else { identity.email.clone() };

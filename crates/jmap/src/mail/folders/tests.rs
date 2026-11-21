@@ -274,3 +274,52 @@ fn counts_are_held_to_what_a_folder_keeps() {
     assert_eq!(counts(json!(2.5), json!(null)), (0, 0));
     assert_eq!(counts(json!({}), json!([1])), (0, 0));
 }
+
+// Mailflare's shape: one mailbox at the top, with no role, standing for all of that mailbox's mail, and the
+// Inbox and its fellows (and the owner's folders) inside it. The container is left out, and what lay in it
+// goes to the top, as any account's folders are.
+#[test]
+fn a_lone_container_with_the_inbox_in_it_is_left_out() {
+    let (listing, counts) = listing_with_counts(&answer(vec![
+        mailbox("mf1", "chris <chris@delite.example>", None, None),
+        mailbox("mf1~inbox", "Inbox", Some("mf1"), Some("inbox")),
+        mailbox("mf1~sent", "Sent", Some("mf1"), Some("sent")),
+        mailbox("mf1~f~10", "Projects", Some("mf1"), None),
+        mailbox("mf1~f~11", "Apollo", Some("mf1~f~10"), None),
+    ]))
+    .unwrap();
+    is_a_tree(&listing);
+    assert!(listing.complete);
+    assert_eq!(ids(&listing), vec!["mf1~inbox", "mf1~sent", "mf1~f~10", "mf1~f~11"]);
+    assert_eq!((parent_of(&listing, "mf1~inbox"), parent_of(&listing, "mf1~f~10")), ("", ""));
+    assert_eq!(parent_of(&listing, "mf1~f~11"), "mf1~f~10");
+    assert!(!counts.contains_key("mf1"));
+}
+
+// Two mailboxes at the top (one app password for two Mailflare mailboxes): each container stays, since it
+// is what tells their Inboxes apart.
+#[test]
+fn two_containers_at_the_top_both_stay() {
+    let listing = listing(&answer(vec![
+        mailbox("a", "Ada", None, None),
+        mailbox("a~inbox", "Inbox", Some("a"), Some("inbox")),
+        mailbox("b", "Shared", None, None),
+        mailbox("b~inbox", "Inbox", Some("b"), Some("inbox")),
+    ]))
+    .unwrap();
+    assert_eq!(ids(&listing).len(), 4);
+    assert_eq!(parent_of(&listing, "a~inbox"), "a");
+}
+
+// The usual JMAP shape is left as it is: an Inbox at the top, or one folder of the owner's at the top with
+// no Inbox in it, or a top mailbox that has a role of its own.
+#[test]
+fn a_top_folder_that_is_no_container_stays() {
+    let plain = listing(&answer(vec![mailbox("M1", "Inbox", None, Some("inbox")), mailbox("M2", "Lists", Some("M1"), None)])).unwrap();
+    assert_eq!(ids(&plain), vec!["M1", "M2"]);
+    let no_inbox = listing(&answer(vec![mailbox("M1", "Projects", None, None), mailbox("M2", "Apollo", Some("M1"), None)])).unwrap();
+    assert_eq!(ids(&no_inbox), vec!["M1", "M2"]);
+    let with_role =
+        listing(&answer(vec![mailbox("M1", "Archive", None, Some("archive")), mailbox("M2", "Inbox", Some("M1"), Some("inbox"))])).unwrap();
+    assert_eq!(ids(&with_role), vec!["M1", "M2"]);
+}

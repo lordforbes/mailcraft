@@ -83,6 +83,8 @@ pub struct Response {
     pub dav: Vec<String>,
     /// `ETag`, as written; none when it was longer than a token should be.
     pub etag: Option<String>,
+    /// `Content-Type`, as written (a JMAP server's answers must be JSON); none when it was too long.
+    pub content_type: Option<String>,
 }
 
 impl std::fmt::Debug for Response {
@@ -215,6 +217,17 @@ pub fn is_closed(error: &NetError) -> bool {
     http::is_closed(error)
 }
 
+/// Whether `error` says that the answer didn't come in the time it had.
+pub fn is_too_slow(error: &NetError) -> bool {
+    http::is_too_slow(error)
+}
+
+/// Whether `error` says that the answer was longer than [`Request::max_response`] (the rest of it was
+/// not read).
+pub fn is_too_long(error: &NetError) -> bool {
+    http::is_too_long(error)
+}
+
 /// Eight random bytes from the system's generator: the client challenge of an NTLM sign-in.
 pub fn client_challenge() -> Result<[u8; 8], NetError> {
     use ring::rand::SecureRandom;
@@ -235,6 +248,7 @@ fn response(reply: http::Reply) -> Response {
         policy_reason: reply.policy_reason,
         dav: reply.dav,
         etag: reply.etag,
+        content_type: reply.content_type,
     }
 }
 

@@ -170,7 +170,13 @@ pub(crate) struct Reply {
     pub(crate) dav: Vec<String>,
     /// Its `ETag` header, as written.
     pub(crate) etag: Option<String>,
+    /// Its `Content-Type` header, tidied and cut at [`MAX_CONTENT_TYPE`] (a JMAP client checks that
+    /// an answer is JSON before it reads it).
+    pub(crate) content_type: Option<String>,
 }
+
+/// The longest `Content-Type` kept of an answer; a longer one is dropped.
+const MAX_CONTENT_TYPE: usize = 256;
 
 /// Most `WWW-Authenticate` headers kept of one answer, and the longest. An NTLM challenge (#252)
 /// is Base64 of up to 16 KiB of target information (about 22,000 characters) and is never cut
@@ -675,6 +681,7 @@ struct Head {
     dav: Vec<String>,
     etag: Option<String>,
     content_range: Option<String>,
+    content_type: Option<String>,
     /// The server closes the connection after this answer: it said so, it speaks HTTP/1.0, or
     /// the way the body ends is not one that leaves the connection fit for more (a coding
     /// other than chunked last, or both a length and chunks, which a server never sends).
@@ -733,6 +740,7 @@ pub(crate) fn read_reply_kept<R: Read>(stream: &mut R, started: Instant, patienc
         policy_reason: head.policy_reason,
         dav: head.dav,
         etag: head.etag,
+        content_type: head.content_type,
     };
     Ok((reply, reusable))
 }
@@ -794,6 +802,11 @@ fn read_head<R: Read>(reader: &mut Reader<'_, R>) -> Result<Head, NetError> {
             head.etag = Some(value.to_string()).filter(|etag| etag.len() <= MAX_ETAG && !etag.chars().any(|c| c.is_control() || c == '\u{fffd}'));
         } else if name.eq_ignore_ascii_case("content-range") {
             head.content_range = Some(value.to_string());
+        } else if name.eq_ignore_ascii_case("content-type") {
+            // (The first one counts; one too long, or with control characters, is none.)
+            if head.content_type.is_none() {
+                head.content_type = Some(value.to_string()).filter(|kind| kind.len() <= MAX_CONTENT_TYPE && !kind.chars().any(char::is_control));
+            }
         }
         // A length beside chunks: the chunks are read, and the connection is not trusted after.
         head.close |= head.chunked && head.length.is_some();

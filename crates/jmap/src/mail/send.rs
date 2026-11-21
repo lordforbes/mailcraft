@@ -20,7 +20,10 @@
 //!    request is asked in two: the import, then the submission.)
 //!
 //! **The message** is written by the program's own writer, without a `Bcc` field: who is named there is in
-//! the envelope only. Every recipient is checked before anything is asked (an address with a space, a line
+//! the envelope only. (An account whose server sends from the draft rather than the envelope, as Mailflare
+//! does, `sends_from_draft`, is the exception: its message is imported into Drafts, never Sent, and keeps
+//! its `Bcc` field, which is where such a server finds who gets a blind copy, and which it takes out before
+//! the message goes; it files its own copy of what it sent.) Every recipient is checked before anything is asked (an address with a space, a line
 //! break, a control character or angle brackets in it is none, and the message is held), and so are the
 //! number of them and the size against the server's `maxSizeUpload`. A message that was never dated is
 //! dated now, as it is for the other ways of sending. The marks that are the mailbox's alone (read,
@@ -164,10 +167,18 @@ pub(super) fn recipients(message: &Message) -> Result<Vec<String>, &'static str>
 /// mailbox's alone (read, answered, flagged), which the writer would put in `Status`, `X-Status` and
 /// `X-MailCraft-Flag`, are left out: they are nobody else's, and the octets are the same whatever of them
 /// changes between two runs (a copy a first run left is known by its octets).
+#[cfg(test)]
 pub(super) fn written(message: &Message) -> Vec<u8> {
+    written_as(message, false)
+}
+
+/// [`written`], with its `Bcc` field when `with_bcc`: for a server that sends from the draft
+/// ([`JmapMailRequest::sends_from_draft`](mailcraft_model::sync::JmapMailRequest::sends_from_draft)), which
+/// finds who gets a blind copy there and takes the field out before the message goes.
+pub(super) fn written_as(message: &Message, with_bcc: bool) -> Vec<u8> {
     let date = if message.date == 0 { mailcraft_time::now() } else { message.date };
     let message = Message { date, read: false, answered: false, flag: FlagStatus::None, ..message.clone() };
-    let options = WriteOptions { include_bcc: false, offset_minutes: mailcraft_time::local_offset_minutes(message.date) };
+    let options = WriteOptions { include_bcc: with_bcc, offset_minutes: mailcraft_time::local_offset_minutes(message.date) };
     mailcraft_mime_model::write(&message, &options)
 }
 
@@ -193,7 +204,14 @@ pub(super) fn identity_of(answer: &Value, email: &str) -> Option<String> {
 
 /// The mailbox a sent message is filed in, of those an answer to `Mailbox/get` lists: the first whose role
 /// is `sent`, else the first whose role is `drafts`.
+#[cfg(test)]
 pub(super) fn filing_of(answer: &Value) -> Option<String> {
+    filing_in(answer, false)
+}
+
+/// [`filing_of`], or, when `drafts_first`, the first whose role is `drafts` before any `sent`: a server
+/// that takes new mail into Drafts only, and files what it sends itself.
+pub(super) fn filing_in(answer: &Value, drafts_first: bool) -> Option<String> {
     let list = answer.get("list").and_then(Value::as_array)?;
     let with_role = |role: &str| {
         list.iter().take(MAX_LISTED_FOLDERS).find_map(|mailbox| {
@@ -201,7 +219,7 @@ pub(super) fn filing_of(answer: &Value) -> Option<String> {
             mailbox.get("role").and_then(Value::as_str).filter(|has| has.eq_ignore_ascii_case(role)).map(|_| id.to_string())
         })
     };
-    with_role("sent").or_else(|| with_role("drafts"))
+    if drafts_first { with_role("drafts").or_else(|| with_role("sent")) } else { with_role("sent").or_else(|| with_role("drafts")) }
 }
 
 /// The arguments of the `Email/import` that makes an email of the blob `blob` in `mailbox`.
@@ -254,7 +272,7 @@ pub(super) fn sent_patch(filing: Option<&Filing>) -> Value {
             patch.insert("mailboxIds".to_string(), Value::Object(only));
         }
         Some(Filing { mailbox, alone: false }) => {
-            patch.insert(format!("mailboxIds/{mailbox}"), Value::Bool(true));
+            patch.insert(format!("mailboxIds/{}", crate::pointer_token(mailbox)), Value::Bool(true));
         }
         None => {}
     }
@@ -499,7 +517,7 @@ impl<H: HttpExchange> Run<'_, H> {
         };
         self.check()?;
         let mailbox = match self.one_call("Mailbox/get", arguments(&get(self.account(), None, &["id", "role"]))?, LIST_BYTES).await {
-            Ok(answer) => filing_of(&answer),
+            Ok(answer) => filing_in(&answer, self.request.sends_from_draft),
             Err(stop) => return told(stop),
         };
         let Some(mailbox) = mailbox else {
@@ -548,7 +566,7 @@ impl<H: HttpExchange> Run<'_, H> {
             Ok(to) => to,
             Err(why) => return (Some(held(why)), None),
         };
-        let octets = written(message);
+        let octets = written_as(message, self.request.sends_from_draft);
         let limit = self.connection.client().limits().max_size_upload();
         if u64::try_from(octets.len()).unwrap_or(u64::MAX) > limit {
             return (Some(held(TOO_LARGE)), None);

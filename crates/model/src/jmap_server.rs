@@ -24,22 +24,50 @@ pub struct JmapServer {
     /// The secret is a bearer token. Otherwise it is the account's password, sent with the
     /// account's e-mail address as its login name (HTTP Basic).
     pub bearer: bool,
+    /// The server sends a message from what its draft says rather than from the submission's
+    /// envelope, and takes new mail into its Drafts mailbox only (Mailflare, a mail service on
+    /// Cloudflare Workers, does both). A message is then imported into Drafts, never Sent, and is
+    /// uploaded with its `Bcc` field, since that field is where such a server finds who gets a
+    /// blind copy: the server takes it out before the message goes. Off, the RFC 8621 way: the
+    /// message goes without `Bcc`, its blind copies named in the envelope alone. Written to the
+    /// mailbox file only when it is on.
+    #[serde(skip_serializing_if = "is_false")]
+    pub sends_from_draft: bool,
+}
+
+fn is_false(on: &bool) -> bool {
+    !*on
 }
 
 /// Longest a JMAP id may be, in octets (RFC 8620 §1.2).
 pub const MAX_JMAP_ID: usize = 255;
 
-/// Whether `id` may be a JMAP id: 1 to [`MAX_JMAP_ID`] octets of `A-Z a-z 0-9 - _` (RFC 8620
-/// §1.2). The one test of it for what is kept here: a folder or a message whose server id is none
-/// is not one a JMAP server has ([`crate::Mailbox::jmap_mailbox`]), whatever a file says.
+/// Whether `b` may be in a JMAP id as one is taken here: `A-Z a-z 0-9 - _`, which RFC 8620 §1.2
+/// allows, and also `~ . @ + =`, which some servers put in theirs although the RFC doesn't allow
+/// them (Mailflare's mailbox ids are `<mailbox>~<role>`, its blob ids `msg~<id>`, its identity
+/// ids end in an address). None of them is a space, a quote, a slash, a backslash, a `%` or a
+/// control character: an id stays one word in a JSON string, in a JSON Pointer (where `~` is
+/// written `~0`) and, percent-encoded, in an address.
+pub fn is_jmap_id_byte(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'~' | b'.' | b'@' | b'+' | b'=')
+}
+
+/// Whether `id` may be a JMAP id: 1 to [`MAX_JMAP_ID`] octets of what [`is_jmap_id_byte`] takes
+/// (RFC 8620 §1.2's alphabet, and the few more some servers use), and not `.` or `..`. The one
+/// test of it for what is kept here: a folder or a message whose server id is none is not one a
+/// JMAP server has ([`crate::Mailbox::jmap_mailbox`]), whatever a file says.
 pub fn is_jmap_id(id: &str) -> bool {
-    !id.is_empty() && id.len() <= MAX_JMAP_ID && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    !id.is_empty() && id.len() <= MAX_JMAP_ID && id != "." && id != ".." && id.bytes().all(is_jmap_id_byte)
 }
 
 /// The address stays out of debug output, which may reach a log.
 impl std::fmt::Debug for JmapServer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("JmapServer").field("session", &!self.session.is_empty()).field("bearer", &self.bearer).finish()
+        f.debug_struct("JmapServer")
+            .field("session", &!self.session.is_empty())
+            .field("bearer", &self.bearer)
+            .field("sends_from_draft", &self.sends_from_draft)
+            .finish()
     }
 }
 
@@ -192,9 +220,10 @@ mod tests {
         ] {
             assert_eq!(session(good), Ok(()), "{good}");
         }
-        let server = JmapServer { session: "https://Mail.Example.org:8443/jmap/session?account=ada@example.org".into(), bearer: true };
+        let server =
+            JmapServer { session: "https://Mail.Example.org:8443/jmap/session?account=ada@example.org".into(), bearer: true, ..Default::default() };
         assert_eq!((server.problem(), server.host()), (None, Some("Mail.Example.org")));
-        let v6 = JmapServer { session: "https://[2001:db8::1]:8443/jmap".into(), bearer: false };
+        let v6 = JmapServer { session: "https://[2001:db8::1]:8443/jmap".into(), bearer: false, ..Default::default() };
         assert_eq!(v6.host(), Some("[2001:db8::1]"));
     }
 
@@ -311,7 +340,8 @@ mod tests {
 
     #[test]
     fn the_setting_reads_writes_and_keeps_its_address_out_of_debug_output() {
-        let server = JmapServer { session: "https://mail.example.org/jmap/session?account=ada@example.org".into(), bearer: true };
+        let server =
+            JmapServer { session: "https://mail.example.org/jmap/session?account=ada@example.org".into(), bearer: true, ..Default::default() };
         let json = serde_json::to_string(&server).unwrap();
         assert_eq!(json, r#"{"session":"https://mail.example.org/jmap/session?account=ada@example.org","bearer":true}"#);
         assert_eq!(serde_json::from_str::<JmapServer>(&json).unwrap(), server);
@@ -351,7 +381,7 @@ mod tests {
                 let rest = text.get(text.find("://").map_or(0, |at| at + 3)..).unwrap_or_default();
                 let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
                 proptest::prop_assert!(!authority.is_empty() && !authority.contains('@'));
-                let server = JmapServer { session: text.clone(), bearer: false };
+                let server = JmapServer { session: text.clone(), bearer: false, ..Default::default() };
                 let named = server.host().unwrap_or_default();
                 proptest::prop_assert!(!named.is_empty() && authority.starts_with(named));
                 // Plain http, only to this computer.

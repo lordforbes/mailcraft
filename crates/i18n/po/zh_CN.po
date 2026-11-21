@@ -2329,7 +2329,7 @@ msgid "Available formats:"
 msgstr "可用格式："
 
 #. android, command label, interface, ribbon
-#: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/AccountScreens.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/PeopleScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/SettingsScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/Shell.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/engine/src/cmd/view.rs crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/backstage.rs crates/ui-egui/src/ribbon.rs
+#: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/AccountScreens.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/PeopleScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/SettingsScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/Shell.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/engine/src/cmd/view.rs crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/backstage.rs crates/ui-egui/src/ribbon.rs
 #, fuzzy
 msgid "Back"
 msgstr "返回"
@@ -3535,7 +3535,7 @@ msgid "Confirm servers"
 msgstr "确认服务器"
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/calendar_view.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/calendar_view.rs
 #, fuzzy
 msgid "Connect"
 msgstr "连接"
@@ -5388,6 +5388,11 @@ msgid "Everything the interface does is a command: {commands} of them, covering 
 msgstr "界面中的每项操作都是一条命令：共 {commands} 条，覆盖功能目录的 {percent}%。命令行、控制通道和 MCP 服务器使用相同的命令。"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Examples"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "Exchange server"
@@ -5894,6 +5899,11 @@ msgstr "字体大小"
 #, fuzzy
 msgid "For IMAP accounts. Microsoft and Exchange server accounts keep mail by Mail to keep offline, in File › Info."
 msgstr "适用于 IMAP 账户。Microsoft 和 Exchange 服务器账户通过“文件 › 信息”中的“要脱机保留的邮件”设置保留邮件。"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "For a mail server that speaks JMAP over HTTPS (port 443), such as Mailflare or Stalwart. There are no IMAP or SMTP ports to set. Nothing is sent until you press Connect, and then only to this server."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
@@ -7575,6 +7585,11 @@ msgid "Its messages, attachments, settings and remembered sign-in go with it, an
 msgstr "其邮件、附件、设置和记住的登录信息也会一并删除；来自服务器的日历、联系人、任务和工作时间亦然。"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Its name alone: MailCraft asks https://mail.example.org/.well-known/jmap. Tick \"Sign in with my password\" unless the server gave you a token."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/reading/unsubscribe.rs
 #, fuzzy
 msgid "Its subject: “{subject}”. Its text: “{body}”."
@@ -7592,6 +7607,16 @@ msgstr "其文本被替换"
 msgid "Its {n} rule goes too; one its server keeps stays there."
 msgid_plural "Its {n} rules go too; those its server keeps stay there."
 msgstr[0] "其 {n} 条本地规则也会一并删除；服务器上的规则仍保留。"
+
+#. name
+#: crates/ui-egui/src/account_setup.rs
+msgid "JMAP server"
+msgstr ""
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "JMAP server account"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/backstage.rs
@@ -8536,7 +8561,7 @@ msgid "MailCraft keeps at most {n} keys imported here, and has that many: remove
 msgstr "MailCraft 在此最多可保存 {n} 个导入的密钥，目前已达上限。请先移除一个不使用的密钥，再导入此密钥。"
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/dialogs.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/dialogs.rs
 #, fuzzy
 msgid "MailCraft keeps it in memory until you close the app. It is never written to disk."
 msgstr "MailCraft 仅将其保存在内存中，直到您关闭应用；它绝不会写入磁盘。"
@@ -8729,6 +8754,21 @@ msgid "Mailbox"
 msgstr "邮箱"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on Cloudflare's workers.dev address"
+msgstr ""
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on a domain of your own"
+msgstr ""
+
+#. name
+#: crates/ui-egui/src/account_setup.rs
+msgid "Mailflare, Stalwart and other JMAP servers"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/signatures.rs
 #, fuzzy
 msgid "Make a signature with New."
@@ -8739,6 +8779,11 @@ msgstr "使用“新建”创建签名。"
 #, fuzzy
 msgid "Make an Item from a Message"
 msgstr "从邮件创建项目"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. The address above must be one of the mailboxes it is allowed to send from. Mail is sent from Mailflare's Drafts, as Mailflare does it."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/forms.rs
@@ -14504,6 +14549,11 @@ msgid "September"
 msgstr "9月"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Server"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup.rs
 #, fuzzy
 msgid "Server Certificate"
@@ -15162,6 +15212,11 @@ msgid "Sign in with Send/Receive to see when other people are busy."
 msgstr "使用“发送/接收”登录，以查看其他人的忙闲状态。"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Sign in with my password instead of a token"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/lib.rs
 #, fuzzy
 msgid "Sign-in cancelled"
@@ -15472,6 +15527,11 @@ msgstr "拼写检查语言"
 #, fuzzy
 msgid "Spelling suggestions"
 msgstr "拼写建议"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Stalwart, or another server that publishes JMAP"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/calendar_view.rs
@@ -16332,7 +16392,7 @@ msgid "The account could not be removed. It and its sign-in are still here. Try 
 msgstr "无法删除该账户。它及其登录信息仍在这里。请重试。"
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs
 #, fuzzy
 msgid "The account couldn't be added"
 msgstr "无法添加账户"
@@ -16770,6 +16830,11 @@ msgstr "无法保存诊断：{error}"
 #, fuzzy
 msgid "The diagnostics weren't saved, so GitHub's page wasn't opened. Try again, or untick Include diagnostics."
 msgstr "诊断信息未保存，因此未打开 GitHub 页面。请重试，或取消勾选“包含诊断”。"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The domain you open Mailflare's web inbox at. Tick \"This is a Mailflare server\". If Cloudflare Access protects it, let /jmap/* and /.well-known/jmap through: a mail program can't sign in to Access."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
@@ -17553,6 +17618,11 @@ msgid "The server turned down the sign-in for {name}: sign in again"
 msgstr "服务器拒绝了 {name} 的登录请求：请重新登录"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The server's address can't be used: it {why}."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "The server's address must begin with https:// and name the server (https://mail.example.org/EWS/Exchange.asmx)"
@@ -17613,6 +17683,11 @@ msgid "The server's name"
 msgstr "服务器名称"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The server's name, or the address of its JMAP session (https://…)."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup.rs
 #, fuzzy
 msgid "The servers below are what Mozilla's ISP database lists for {domain}. Check them before you connect."
@@ -17629,6 +17704,11 @@ msgstr "以下服务器是 {domain} 向邮件程序发布的（其 autoconfig �
 #, fuzzy
 msgid "The servers below were found in the DNS records of {domain} (its SRV records). Check them before you connect."
 msgstr "以下服务器是在 {domain} 的 DNS 记录（其 SRV 记录）中找到的。连接之前请先检查。"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The session's address, when you know it"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/settings_notice.rs
@@ -18446,6 +18526,11 @@ msgid "This invitation has the ID of a meeting on your calendar but names anothe
 msgstr "此邀请的会议 ID 与您日历中的会议相同，但指定了另一位组织者，因此无法更改该会议。"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "This is a Mailflare server"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/updates.rs
 #, fuzzy
 msgid "This is a development build: it checks only when you press Check for Updates."
@@ -18957,6 +19042,11 @@ msgid "Thursday"
 msgstr "星期四"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Tick \"This is a Mailflare server\" and paste a Mailflare app password. Your subdomain is under Workers & Pages in Cloudflare's dashboard."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/merge_contacts.rs
 #, fuzzy
 msgid "Tick at least one more contact to merge into the kept one."
@@ -19203,6 +19293,11 @@ msgstr "今天"
 #, fuzzy
 msgid "Today could not be read."
 msgstr "无法读取今天。"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Token or app password"
+msgstr ""
 
 #. android, interface, name, ribbon
 #: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/DueDates.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/ui-egui/src/forms.rs crates/ui-egui/src/ribbon.rs crates/ui-egui/src/tasks_view.rs
@@ -19702,6 +19797,11 @@ msgstr "“使用系统设置”遵循 Windows 设置中的“动画效果”。
 #, fuzzy
 msgid "Use {address}"
 msgstr "使用 {address}"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Used as it is. It must begin with https://."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs

@@ -22,8 +22,12 @@ mailcraft-model = { workspace = true }
 # The jobs the host runs: what they are told and what they bring back, and the requests (empty in the browser).
 mailcraft-net = { workspace = true }
 mailcraft-time = { workspace = true }
+# JMAP accounts over this computer's sockets (`jmap.rs`): the client, its HTTPS `mailcraft-net`'s.
+mailcraft-jmap = { workspace = true }
 
 [dev-dependencies]
+# The JMAP server in the process, behind a loopback server, for `jmap_tests.rs`.
+mailcraft-jmap = { workspace = true, features = ["stand-in"] }
 # The stand-in for Microsoft Graph, to show that a job sends nothing it must not.
 mailcraft-net = { workspace = true, features = ["stand-in"] }
 serde_json = { workspace = true }

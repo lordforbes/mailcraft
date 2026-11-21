@@ -69,13 +69,13 @@ fn patch(change: &JmapChange) -> Option<Map<String, Value>> {
         JmapChange::Keywords { read, flagged, answered, forwarded, .. } => {
             for (keyword, mark) in [("$seen", read), ("$flagged", flagged), ("$answered", answered), ("$forwarded", forwarded)] {
                 if let Some(on) = mark {
-                    patch.insert(format!("keywords/{keyword}"), if *on { Value::Bool(true) } else { Value::Null });
+                    patch.insert(format!("keywords/{}", crate::pointer_token(keyword)), if *on { Value::Bool(true) } else { Value::Null });
                 }
             }
         }
         JmapChange::Move { from, to, .. } => {
-            patch.insert(format!("mailboxIds/{from}"), Value::Null);
-            patch.insert(format!("mailboxIds/{to}"), Value::Bool(true));
+            patch.insert(format!("mailboxIds/{}", crate::pointer_token(from)), Value::Null);
+            patch.insert(format!("mailboxIds/{}", crate::pointer_token(to)), Value::Bool(true));
         }
         JmapChange::Destroy { .. } => return None,
     }

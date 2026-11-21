@@ -326,7 +326,8 @@ impl Data {
 
     fn id(&mut self, prefix: &str) -> String {
         self.next = self.next.saturating_add(1);
-        format!("{prefix}{}", self.next)
+        let between = if self.profile.tilde_ids { "~" } else { "" };
+        format!("{prefix}{between}{}", self.next)
     }
 
     fn changed(&mut self) {

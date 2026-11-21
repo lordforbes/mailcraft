@@ -56,6 +56,11 @@ pub struct JmapMailRequest {
     /// password, sent with the account's address as its login name ([`crate::JmapServer::bearer`]).
     #[serde(skip_serializing_if = "is_false")]
     pub bearer: bool,
+    /// The server sends from the draft and takes new mail into Drafts only
+    /// ([`crate::JmapServer::sends_from_draft`]): a message is imported into Drafts and goes with
+    /// its `Bcc` field.
+    #[serde(skip_serializing_if = "is_false")]
+    pub sends_from_draft: bool,
     /// How many of the newest messages of a mailbox are read at most, from 1 to [`MAX_JMAP_WINDOW`].
     pub window: u32,
     /// List the server's mailboxes in this run: the first run, a run that reads every mailbox, and
@@ -311,6 +316,7 @@ impl std::fmt::Debug for JmapMailRequest {
         f.debug_struct("JmapMailRequest")
             .field("account", &self.account)
             .field("bearer", &self.bearer)
+            .field("sends_from_draft", &self.sends_from_draft)
             .field("window", &self.window)
             .field("list_folders", &self.list_folders)
             .field("scope", &self.scope.describe())

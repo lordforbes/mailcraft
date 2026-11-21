@@ -33,18 +33,36 @@ pub struct Profile {
     /// has nothing to do, and its id says where it lies, so that [`Data::move_to`](super::Data::move_to) gives
     /// it (and its blob) a new one.
     pub one_mailbox: bool,
+    /// Ids carry a `~` between their kind and their number (`M~3`, `E~7`), as Mailflare's do
+    /// (`<mailbox>~<role>`, `msg~<id>`): outside RFC 8620 §1.2's alphabet, and in a JSON Pointer a
+    /// `~` that must be written `~0`.
+    pub tilde_ids: bool,
+    /// `Email/import` makes an email in a mailbox whose role is `drafts` and nowhere else
+    /// (`invalidProperties` on `mailboxIds`), as Mailflare's does.
+    pub drafts_only: bool,
+    /// `EmailSubmission/set` sends a message to who its own `To`, `Cc` and `Bcc` fields name, and
+    /// passes over the envelope it is given, as Mailflare does; the email submitted is destroyed
+    /// once it is sent (the server files its own copy), and said so in the `Email/set` answered
+    /// besides.
+    pub from_draft: bool,
 }
 
 impl Profile {
     /// A store of the standard kind: parsed fields, an email in as many mailboxes as it is put in.
     pub fn standard() -> Profile {
-        Profile { parsed_fields: true, fixed_mailboxes: false, one_mailbox: false }
+        Profile { parsed_fields: true, fixed_mailboxes: false, one_mailbox: false, tilde_ids: false, drafts_only: false, from_draft: false }
     }
 
     /// A server that names a message by where it is: raw headers only, one mailbox for an email, and
     /// mailboxes that are not to be made, renamed or removed.
     pub fn by_place() -> Profile {
-        Profile { parsed_fields: false, fixed_mailboxes: true, one_mailbox: true }
+        Profile { parsed_fields: false, fixed_mailboxes: true, one_mailbox: true, tilde_ids: false, drafts_only: false, from_draft: false }
+    }
+
+    /// A server that sends as Mailflare (a mail service on Cloudflare Workers) does: ids with a `~` in
+    /// them, new mail imported into Drafts only, and a message sent to who its own fields name.
+    pub fn mailflare() -> Profile {
+        Profile { tilde_ids: true, drafts_only: true, from_draft: true, ..Profile::standard() }
     }
 }
 

@@ -90,6 +90,8 @@ mod changes;
 #[cfg(test)]
 mod changes_tests;
 mod folders;
+#[cfg(test)]
+mod mailflare_tests;
 mod message;
 mod send;
 #[cfg(test)]
