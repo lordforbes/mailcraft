@@ -89,3 +89,18 @@ fn the_choose_page_offers_a_jmap_server() {
     setup.act(&mut app, Action::Back);
     assert_eq!(setup.page, Page::Choose);
 }
+
+// The examples start shown, and every one of them is a server the page takes as it is written there.
+#[test]
+fn the_examples_are_shown_and_each_is_an_address_that_may_be_used() {
+    let mut app = app();
+    let mut setup = AccountSetup::blank(Page::Choose);
+    setup.email = ME.into();
+    setup.act(&mut app, Action::Pick(Kind::Jmap));
+    assert!(setup.settings_open);
+    for (_, server, _) in EXAMPLES {
+        for mailflare in [true, false] {
+            assert_eq!(JmapServer::check_session(&session_of(server, mailflare)), Ok(()), "{server}");
+        }
+    }
+}

@@ -1,0 +1,1 @@
+| 2026-11-21 | patch | Examples for Add Account's JMAP server page, port 443 only, Fastmail not yet (its downloads are on another host), Mailflare's folders shown at the top when one mailbox is reached, and Cloudflare Access |

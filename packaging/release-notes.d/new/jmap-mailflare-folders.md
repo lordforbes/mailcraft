@@ -1,0 +1,1 @@
+- A Mailflare account's folders (Inbox, Sent, Drafts and the rest) are shown at the top of the account, as any other account's are, instead of inside a folder named after the mailbox, and no message is listed twice. Add Account's JMAP server page has worked examples.

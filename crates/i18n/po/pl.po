@@ -5411,6 +5411,11 @@ msgid "Everything the interface does is a command: {commands} of them, covering 
 msgstr "Wszystko, co robi interfejs, jest poleceniem: jest ich {commands}, co pokrywa {percent}% katalogu funkcji. Wiersz poleceń, kanał sterowania i serwer MCP uruchamiają te same polecenia."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Examples"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "Exchange server"
@@ -5922,7 +5927,7 @@ msgstr "Dla kont IMAP. Konta Microsoft i serwera Exchange przechowują pocztę w
 
 #. interface
 #: crates/ui-egui/src/account_setup/jmap.rs
-msgid "For a mail server that speaks JMAP, such as Mailflare, Fastmail or Stalwart. Nothing is sent until you press Connect, and then only to this server."
+msgid "For a mail server that speaks JMAP over HTTPS (port 443), such as Mailflare or Stalwart. There are no IMAP or SMTP ports to set. Nothing is sent until you press Connect, and then only to this server."
 msgstr ""
 
 #. interface
@@ -7615,6 +7620,11 @@ msgid "Its messages, attachments, settings and remembered sign-in go with it, an
 msgstr "Razem z nim znikają jego wiadomości, załączniki, ustawienia i zapamiętane logowanie, a także kalendarz, kontakty, zadania i godziny pracy pochodzące z jego serwera."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Its name alone: MailCraft asks https://mail.example.org/.well-known/jmap. Tick \"Sign in with my password\" unless the server gave you a token."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/reading/unsubscribe.rs
 #, fuzzy
 msgid "Its subject: “{subject}”. Its text: “{body}”."
@@ -8782,9 +8792,19 @@ msgstr "Wyszukiwanie Twoich kluczy przez MailCraft zakończyło się bez odpowie
 msgid "Mailbox"
 msgstr "Skrzynka pocztowa"
 
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on Cloudflare's workers.dev address"
+msgstr ""
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on a domain of your own"
+msgstr ""
+
 #. name
 #: crates/ui-egui/src/account_setup.rs
-msgid "Mailflare, Fastmail, Stalwart and others"
+msgid "Mailflare, Stalwart and other JMAP servers"
 msgstr ""
 
 #. interface
@@ -8801,7 +8821,7 @@ msgstr "Utwórz element z wiadomości"
 
 #. interface
 #: crates/ui-egui/src/account_setup/jmap.rs
-msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. Mail is sent from Mailflare's Drafts, as Mailflare does it."
+msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. The address above must be one of the mailboxes it is allowed to send from. Mail is sent from Mailflare's Drafts, as Mailflare does it."
 msgstr ""
 
 #. interface
@@ -15566,6 +15586,11 @@ msgid "Spelling suggestions"
 msgstr "Sugestie pisowni"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Stalwart, or another server that publishes JMAP"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/calendar_view.rs
 #, fuzzy
 msgid "Stand this calendar beside the others"
@@ -16868,6 +16893,11 @@ msgid "The diagnostics weren't saved, so GitHub's page wasn't opened. Try again,
 msgstr "Diagnostyka nie została zapisana, więc strona GitHuba nie została otwarta. Spróbuj ponownie lub odznacz Dołącz diagnostykę."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The domain you open Mailflare's web inbox at. Tick \"This is a Mailflare server\". If Cloudflare Access protects it, let /jmap/* and /.well-known/jmap through: a mail program can't sign in to Access."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "The domain {domain} names a server for Exchange's automatic setup (Autodiscover), so this looks like an Exchange server account. Type your password and press Connect: MailCraft looks for the server and checks the account. Nothing is sent until then."
@@ -17737,6 +17767,11 @@ msgstr "Poniższe serwery to te, które {domain} publikuje dla programów poczto
 #, fuzzy
 msgid "The servers below were found in the DNS records of {domain} (its SRV records). Check them before you connect."
 msgstr "Poniższe serwery znaleziono w rekordach DNS domeny {domain} (jej rekordy SRV). Sprawdź je przed połączeniem."
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The session's address, when you know it"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/settings_notice.rs
@@ -19084,6 +19119,11 @@ msgid "Thursday"
 msgstr "czwartek"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Tick \"This is a Mailflare server\" and paste a Mailflare app password. Your subdomain is under Workers & Pages in Cloudflare's dashboard."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/merge_contacts.rs
 #, fuzzy
 msgid "Tick at least one more contact to merge into the kept one."
@@ -19840,6 +19880,11 @@ msgstr "Użyj ustawienia systemu zgodnie z opcją Efekty animacji w ustawieniach
 #, fuzzy
 msgid "Use {address}"
 msgstr "Użyj {address}"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Used as it is. It must begin with https://."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs

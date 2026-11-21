@@ -4,8 +4,8 @@
 //! [`Transport`], one HTTPS exchange of `mailcraft_net::https` at a time, on the calling thread.
 //! The desktop app runs a job on a thread of its own (`apps/mailcraft/src/jmap_runner.rs`), and the
 //! command line on its own thread (`mailcraft-cli sync`); the browser build does the same over
-//! `fetch` instead (`apps/mailcraft-web/src/jmap.rs`). A JMAP server such as Mailflare, Fastmail or
-//! Stalwart is reached this way.
+//! `fetch` instead (`apps/mailcraft-web/src/jmap.rs`). A JMAP server such as Mailflare or Stalwart
+//! is reached this way.
 //!
 //! **What the transport does**, as `mailcraft_jmap::http` asks of a program: the request goes as
 //! built (its method, address, header fields and body); no redirect is followed (`mailcraft-jmap`

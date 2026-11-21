@@ -5389,6 +5389,11 @@ msgid "Everything the interface does is a command: {commands} of them, covering 
 msgstr "Minden, amit a felület csinál, parancs: {commands} közülük, amely lefedi a funkció katalógus {percent}%-át. A parancssor, a vezérlő csatorna és az MCP szerver ugyanazt a parancsot futtatja."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Examples"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "Exchange server"
@@ -5894,7 +5899,7 @@ msgstr "IMAP fiókok. Microsoft és Exchange szerver fiókok vezetnek posta Mail
 
 #. interface
 #: crates/ui-egui/src/account_setup/jmap.rs
-msgid "For a mail server that speaks JMAP, such as Mailflare, Fastmail or Stalwart. Nothing is sent until you press Connect, and then only to this server."
+msgid "For a mail server that speaks JMAP over HTTPS (port 443), such as Mailflare or Stalwart. There are no IMAP or SMTP ports to set. Nothing is sent until you press Connect, and then only to this server."
 msgstr ""
 
 #. interface
@@ -7580,6 +7585,11 @@ msgid "Its messages, attachments, settings and remembered sign-in go with it, an
 msgstr "Üzenetei, mellékletei, beállításai és emlékezetes bejelentkezése is vele együtt jár, és így a naptár, a kapcsolatok, a feladatok és a munkaidő, ami a szerveréről jött."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Its name alone: MailCraft asks https://mail.example.org/.well-known/jmap. Tick \"Sign in with my password\" unless the server gave you a token."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/reading/unsubscribe.rs
 #, fuzzy
 msgid "Its subject: “{subject}”. Its text: “{body}”."
@@ -8745,9 +8755,19 @@ msgstr "MailCraft válasz nélkül megállt a kulcsaid keresése."
 msgid "Mailbox"
 msgstr "Postafiók"
 
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on Cloudflare's workers.dev address"
+msgstr ""
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Mailflare on a domain of your own"
+msgstr ""
+
 #. name
 #: crates/ui-egui/src/account_setup.rs
-msgid "Mailflare, Fastmail, Stalwart and others"
+msgid "Mailflare, Stalwart and other JMAP servers"
 msgstr ""
 
 #. interface
@@ -8764,7 +8784,7 @@ msgstr "Tétel létrehozása levélből"
 
 #. interface
 #: crates/ui-egui/src/account_setup/jmap.rs
-msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. Mail is sent from Mailflare's Drafts, as Mailflare does it."
+msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. The address above must be one of the mailboxes it is allowed to send from. Mail is sent from Mailflare's Drafts, as Mailflare does it."
 msgstr ""
 
 #. interface
@@ -15510,6 +15530,11 @@ msgid "Spelling suggestions"
 msgstr "Helyesírási javaslatok"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Stalwart, or another server that publishes JMAP"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/calendar_view.rs
 #, fuzzy
 msgid "Stand this calendar beside the others"
@@ -16810,6 +16835,11 @@ msgid "The diagnostics weren't saved, so GitHub's page wasn't opened. Try again,
 msgstr "A diagnosztika nem mentett, így GitHub oldala nem nyílt meg. Próbáld újra, vagy kikapcsolni a diagnosztikát."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The domain you open Mailflare's web inbox at. Tick \"This is a Mailflare server\". If Cloudflare Access protects it, let /jmap/* and /.well-known/jmap through: a mail program can't sign in to Access."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "The domain {domain} names a server for Exchange's automatic setup (Autodiscover), so this looks like an Exchange server account. Type your password and press Connect: MailCraft looks for the server and checks the account. Nothing is sent until then."
@@ -17678,6 +17708,11 @@ msgstr "Az alábbi szerverek azok, amelyeket a {domain} a levelezőprogramokhoz 
 #, fuzzy
 msgid "The servers below were found in the DNS records of {domain} (its SRV records). Check them before you connect."
 msgstr "Az alábbi szerverek a {domain} DNS-nyilvántartásában (a SRV-nyilvántartásában) találhatók. Ellenőrizze őket, mielőtt kapcsolatba lépne velük."
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The session's address, when you know it"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/settings_notice.rs
@@ -19018,6 +19053,11 @@ msgid "Thursday"
 msgstr "csütörtök"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Tick \"This is a Mailflare server\" and paste a Mailflare app password. Your subdomain is under Workers & Pages in Cloudflare's dashboard."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/merge_contacts.rs
 #, fuzzy
 msgid "Tick at least one more contact to merge into the kept one."
@@ -19769,6 +19809,11 @@ msgstr "A rendszer beállításai a Windows beállításaiban az Animációs eff
 #, fuzzy
 msgid "Use {address}"
 msgstr "{address} használata"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Used as it is. It must begin with https://."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs

@@ -94,6 +94,25 @@ its session, `https://…`), tick **This is a Mailflare server** for one, and pa
 for a server that signs in with the account's password, tick that and type the password). Nothing
 is sent until Connect; then the account's first Send/Receive starts. A server's name alone stands for
 `https://<name>/.well-known/jmap` (RFC 8620 §2.2), or `https://<name>/jmap/session` for Mailflare.
+JMAP is HTTPS: there are no IMAP or SMTP ports to set, only port 443, and mail is sent over the same
+connection.
+
+Examples (the page shows them too, under Examples):
+
+| What | Server | How it signs in |
+|---|---|---|
+| Mailflare on Cloudflare's own address | `mailflare.<your-subdomain>.workers.dev` | Tick **This is a Mailflare server**; paste a Mailflare app password. The subdomain is under Workers & Pages in Cloudflare's dashboard. |
+| Mailflare on a domain of your own | `mail.example.org` (the address of Mailflare's web inbox) | As above. |
+| Stalwart, or another server that publishes `/.well-known/jmap` | `mail.example.org` | Tick **Sign in with my password** unless the server gave you a token. |
+| A session address you know | `https://mail.example.org/jmap/session` | Used as it is; `https://` only. |
+
+The account's address must be one the token or password may send as: the server's identity for
+that address is the one mail goes out as.
+
+**Not yet:** Fastmail. Its session names a download address on another host
+(`www.fastmailusercontent.com`) than the session's (`api.fastmail.com`), and MailCraft sends the
+credential to the session's own origin and nowhere else, so the connection is refused with that
+reason. Fastmail works over IMAP and SMTP in the meantime.
 
 **On the command line**, add it with `account.add` (below) and run `mailcraft-cli sync <mailbox>
 --account <address>` with the secret in the environment: `MAILCRAFT_JMAP_TOKEN` for a token,
@@ -188,6 +207,15 @@ sends through it, with what sets it apart from the RFC taken into account:
   mailbox"), and nothing is sent.
 - **The address you add the account with** must be one of the Mailflare mailboxes the key may send
   from: MailCraft sends as the identity the server has for that address.
+- **Its folders.** Mailflare lists each of its mailboxes as a folder with no role, with that mailbox's
+  Inbox, Sent, Drafts, Archive, Spam, Trash and the owner's folders inside it; that folder itself
+  stands for all the mail of the mailbox. When the key reaches one mailbox, MailCraft leaves that
+  folder out and shows the Inbox and the rest at the top, as for any other account, and reads each
+  message once. When it reaches two or more, each mailbox stays a folder of its own, with its
+  folders inside it.
+- **Cloudflare Access.** A mail program can't sign in to Cloudflare Access. If Access protects
+  Mailflare, let `/jmap/*` and `/.well-known/jmap` through (the app password still protects them),
+  or MailCraft is answered with Access's sign-in page instead of JMAP.
 
 ## Trying it
 

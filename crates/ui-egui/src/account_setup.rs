@@ -116,7 +116,7 @@ pub enum Kind {
     Local,
     /// An Exchange server the owner's organisation runs itself (#252).
     Exchange,
-    /// A server that speaks JMAP (M6): Mailflare, Fastmail, Stalwart…
+    /// A server that speaks JMAP (M6): Mailflare, Stalwart…
     Jmap,
 }
 
@@ -129,7 +129,7 @@ impl Kind {
     /// otherwise), last.
     fn tiles() -> Vec<Kind> {
         let mut tiles = Kind::HOSTED.to_vec();
-        // (A JMAP server beside it: Mailflare, Fastmail, Stalwart…)
+        // (A JMAP server beside it: Mailflare, Stalwart…)
         tiles.push(Kind::Jmap);
         tiles.push(Kind::Exchange);
         tiles
@@ -171,7 +171,7 @@ impl Kind {
             Kind::Other => "Any other mail server",
             Kind::Local => "A mailbox kept here, with no mail server",
             Kind::Exchange => "A mail server your organisation runs itself",
-            Kind::Jmap => "Mailflare, Fastmail, Stalwart and others",
+            Kind::Jmap => "Mailflare, Stalwart and other JMAP servers",
         }
     }
 

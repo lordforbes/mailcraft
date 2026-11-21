@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: MailCraft contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //! The JMAP server page of Add Account (M6): an account kept in step over JMAP (RFC 8620, RFC 8621)
-//! rather than IMAP and SMTP, such as one on Mailflare (a mail service on Cloudflare Workers),
-//! Fastmail or Stalwart.
+//! rather than IMAP and SMTP, such as one on Mailflare (a mail service on Cloudflare Workers) or
+//! Stalwart. (Fastmail serves downloads from another host than its session, which is refused: the
+//! secret goes to the session's own server and nowhere else.)
 //!
 //! The owner gives the server (its name, or the address of its session resource), the token or
 //! password, and whether it is a Mailflare server. A name alone becomes the session's address:
@@ -33,6 +34,36 @@ pub(super) struct Jmap {
     pub(super) password: bool,
 }
 
+/// What the Examples on the page show: what it is, what goes in Server, and how to sign in.
+const EXAMPLES: [(&str, &str, &str); 4] = [
+    (
+        tl_later!("Mailflare on Cloudflare's workers.dev address"),
+        "mailflare.your-subdomain.workers.dev",
+        tl_later!(
+            "Tick \"This is a Mailflare server\" and paste a Mailflare app password. Your subdomain is under Workers & Pages in Cloudflare's dashboard."
+        ),
+    ),
+    (
+        tl_later!("Mailflare on a domain of your own"),
+        "mail.example.org",
+        tl_later!(
+            "The domain you open Mailflare's web inbox at. Tick \"This is a Mailflare server\". If Cloudflare Access protects it, let /jmap/* and /.well-known/jmap through: a mail program can't sign in to Access."
+        ),
+    ),
+    (
+        tl_later!("Stalwart, or another server that publishes JMAP"),
+        "mail.example.org",
+        tl_later!(
+            "Its name alone: MailCraft asks https://mail.example.org/.well-known/jmap. Tick \"Sign in with my password\" unless the server gave you a token."
+        ),
+    ),
+    (
+        tl_later!("The session's address, when you know it"),
+        "https://mail.example.org/jmap/session",
+        tl_later!("Used as it is. It must begin with https://."),
+    ),
+];
+
 /// The session address for what was typed: an address as it is, a server's name alone as the place
 /// its session is (`mailflare`: `/jmap/session`, else the well-known `/.well-known/jmap`).
 pub(super) fn session_of(typed: &str, mailflare: bool) -> String {
@@ -50,6 +81,8 @@ impl AccountSetup {
     pub(super) fn jmap_page_from(&mut self) {
         self.picked = true;
         self.go(Page::Jmap);
+        // (The examples are what a first visit needs most: shown until the owner folds them away.)
+        self.settings_open = true;
     }
 
     /// What the JMAP page's actions do; `None` for an action of another page.
@@ -101,11 +134,11 @@ impl AccountSetup {
             note(
                 ui,
                 tl!(
-                    "For a mail server that speaks JMAP, such as Mailflare, Fastmail or Stalwart. Nothing is sent until you press Connect, and then only to this server."
+                    "For a mail server that speaks JMAP over HTTPS (port 443), such as Mailflare or Stalwart. There are no IMAP or SMTP ports to set. Nothing is sent until you press Connect, and then only to this server."
                 ),
                 t.text,
             );
-            if field(ui, pass, "jmapServer", tl!("Server"), &mut self.jmap.server, "mail.example.org", SESSION).changed() {
+            if field(ui, pass, "jmapServer", tl!("Server"), &mut self.jmap.server, "mailflare.example.workers.dev", SESSION).changed() {
                 self.error.clear();
             }
             note(ui, tl!("The server's name, or the address of its JMAP session (https://…)."), t.text_dim);
@@ -114,7 +147,7 @@ impl AccountSetup {
                 note(
                     ui,
                     tl!(
-                        "Make an app password in Mailflare (Settings › App passwords) and paste it below. Mail is sent from Mailflare's Drafts, as Mailflare does it."
+                        "Make an app password in Mailflare (Settings › App passwords) and paste it below. The address above must be one of the mailboxes it is allowed to send from. Mail is sent from Mailflare's Drafts, as Mailflare does it."
                     ),
                     t.text_dim,
                 );
@@ -124,6 +157,17 @@ impl AccountSetup {
             let hint = if self.jmap.mailflare || !self.jmap.password { tl!("Token or app password") } else { "" };
             self.password_field(ui, pass, app.secret_watch(), hint);
             note(ui, tl!("MailCraft keeps it in memory until you close the app. It is never written to disk."), t.text_dim);
+            ui.add_space(2.0);
+            disclosure(ui, tl!("Examples"), &mut self.settings_open, &t);
+            if self.settings_open {
+                indented(ui, |ui| {
+                    for (what, server, how) in EXAMPLES {
+                        caption(ui, tl!(what), &t);
+                        ui.label(RichText::new(server).color(t.text).monospace());
+                        note(ui, tl!(how), t.text_dim);
+                    }
+                });
+            }
         });
         problem(ui, &self.error);
         let ready = !self.password.0.is_empty() && !self.jmap.server.trim().is_empty();
