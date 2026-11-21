@@ -92,7 +92,7 @@ fn a_jmap_account_is_made_with_its_server_and_no_mail_servers() {
     let (mut s, account) = session();
     let a = s.mailbox.account(account).unwrap();
     assert_eq!((a.kind, a.incoming.is_none(), a.outgoing.is_none(), a.oauth.is_none()), (AccountKind::Jmap, true, true, true));
-    assert_eq!(a.jmap, Some(JmapServer { session: SESSION.into(), bearer: true }));
+    assert_eq!(a.jmap, Some(JmapServer { session: SESSION.into(), bearer: true, ..Default::default() }));
     // It isn't an IMAP account: no IMAP request is made of it.
     assert!(super::super::account::sync_request(&s, account).is_err());
     let listed = s.run("account.list", &json!({})).unwrap();
@@ -106,7 +106,7 @@ fn a_jmap_account_is_made_with_its_server_and_no_mail_servers() {
     // Plain http to this computer is for tests, and is taken; the secret is a password unless said.
     let local = s.run("account.add", &json!({"email": "bo@example.org", "kind": "jmap", "jmap": {"session": "http://127.0.0.1:8080/jmap"}})).unwrap();
     let local = s.mailbox.account(local["id"].as_u64().unwrap()).unwrap();
-    assert_eq!(local.jmap, Some(JmapServer { session: "http://127.0.0.1:8080/jmap".into(), bearer: false }));
+    assert_eq!(local.jmap, Some(JmapServer { session: "http://127.0.0.1:8080/jmap".into(), bearer: false, ..Default::default() }));
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn an_account_doesnt_turn_into_a_jmap_account_or_out_of_one() {
     assert_eq!(s.mailbox.account(imap).map(|a| (a.kind, a.jmap.is_none())), Some((AccountKind::Imap, true)));
     // Its server is a setting like any: the address, and whether the secret is a bearer token.
     s.run("account.edit", &json!({"id": account, "jmap": {"bearer": false}})).unwrap();
-    assert_eq!(s.mailbox.account(account).unwrap().jmap, Some(JmapServer { session: SESSION.into(), bearer: false }));
+    assert_eq!(s.mailbox.account(account).unwrap().jmap, Some(JmapServer { session: SESSION.into(), bearer: false, ..Default::default() }));
     assert!(s.run("account.edit", &json!({"id": account, "jmap": {"session": "http://jmap.example.org/jmap"}})).is_err());
     assert_eq!(s.mailbox.account(account).unwrap().jmap.as_ref().map(|j| j.session.as_str()), Some(SESSION));
     // Until its mail is here, it may be pointed anywhere; once it is, its session address and its
@@ -174,7 +174,8 @@ fn where_a_jmap_account_connects_is_said_without_the_rest_of_its_address() {
     let asked = crate::agent::describe(&s, "account.edit", &json!({"id": account, "jmap": {"session": "https://mail.example.net/jmap"}}));
     assert!(asked.contains("from jmap https://jmap.example.org:8443 to jmap https://mail.example.net"), "{asked}");
     // A mailbox file can say anything: one that can't be used is said so, and gets no request.
-    s.mailbox.account_mut(account).unwrap().jmap = Some(JmapServer { session: "http://elsewhere.example/jmap".into(), bearer: true });
+    s.mailbox.account_mut(account).unwrap().jmap =
+        Some(JmapServer { session: "http://elsewhere.example/jmap".into(), bearer: true, ..Default::default() });
     assert_eq!(said(&s), "jmap, no server address that can be used");
     assert_eq!(jmap_mail_request(&s, account, false).unwrap_err().to_string(), format!("{ME} has no JMAP server address that can be used"));
     assert!(jmap_fetch_request(&s, account, None, 10).is_err());
@@ -640,7 +641,8 @@ fn a_folder_that_stays_keeps_the_folders_above_it() {
 fn a_server_address_a_mailbox_file_spoiled_can_be_put_right() {
     let (mut s, account) = session();
     run(&mut s, account, vec![], true);
-    s.mailbox.account_mut(account).unwrap().jmap = Some(JmapServer { session: "http://elsewhere.example/jmap".into(), bearer: true });
+    s.mailbox.account_mut(account).unwrap().jmap =
+        Some(JmapServer { session: "http://elsewhere.example/jmap".into(), bearer: true, ..Default::default() });
     // Another setting can still be changed, and the address put right, though its mail is here.
     s.run("account.edit", &json!({"id": account, "name": "Ada"})).unwrap();
     assert!(jmap_mail_request(&s, account, false).is_err());

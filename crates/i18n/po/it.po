@@ -2330,7 +2330,7 @@ msgid "Available formats:"
 msgstr "Formati disponibili:"
 
 #. android, command label, interface, ribbon
-#: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/AccountScreens.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/PeopleScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/SettingsScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/Shell.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/engine/src/cmd/view.rs crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/backstage.rs crates/ui-egui/src/ribbon.rs
+#: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/AccountScreens.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/PeopleScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/SettingsScreen.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/Shell.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/engine/src/cmd/view.rs crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/backstage.rs crates/ui-egui/src/ribbon.rs
 #, fuzzy
 msgid "Back"
 msgstr "Indietro"
@@ -3531,7 +3531,7 @@ msgid "Confirm servers"
 msgstr "Conferma server"
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/calendar_view.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/calendar_view.rs
 #, fuzzy
 msgid "Connect"
 msgstr "Connetti"
@@ -5899,6 +5899,11 @@ msgid "For IMAP accounts. Microsoft and Exchange server accounts keep mail by Ma
 msgstr "Per gli account IMAP. Gli account Microsoft e server Exchange conservano la posta secondo Posta da tenere offline, in File › Info."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "For a mail server that speaks JMAP, such as Mailflare, Fastmail or Stalwart. Nothing is sent until you press Connect, and then only to this server."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "For a mail server your organisation runs itself. MailCraft looks for the server from your address, or you can type its address in Server settings. Nothing is sent until you press Connect."
@@ -7594,6 +7599,16 @@ msgid_plural "Its {n} rules go too; those its server keeps stay there."
 msgstr[0] "Se ne va anche la sua {n} regola; quella che tiene il suo server resta lì."
 msgstr[1] "Se ne vanno anche le sue {n} regole; quelle che tiene il suo server restano lì."
 
+#. name
+#: crates/ui-egui/src/account_setup.rs
+msgid "JMAP server"
+msgstr ""
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "JMAP server account"
+msgstr ""
+
 #. interface
 #: crates/ui-egui/src/backstage.rs
 #, fuzzy
@@ -8537,7 +8552,7 @@ msgid "MailCraft keeps at most {n} keys imported here, and has that many: remove
 msgstr "MailCraft conserva al massimo {n} chiavi importate qui, e le ha già: rimuovine una che non usi, poi importa questa."
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/dialogs.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/jmap.rs crates/ui-egui/src/dialogs.rs
 #, fuzzy
 msgid "MailCraft keeps it in memory until you close the app. It is never written to disk."
 msgstr "MailCraft la conserva in memoria fino alla chiusura dell'app. Non viene mai scritta su disco."
@@ -8730,6 +8745,11 @@ msgstr "La ricerca delle tue chiavi da parte di MailCraft si è fermata senza un
 msgid "Mailbox"
 msgstr "Cassetta postale"
 
+#. name
+#: crates/ui-egui/src/account_setup.rs
+msgid "Mailflare, Fastmail, Stalwart and others"
+msgstr ""
+
 #. interface
 #: crates/ui-egui/src/signatures.rs
 #, fuzzy
@@ -8741,6 +8761,11 @@ msgstr "Creare una firma con Nuovo."
 #, fuzzy
 msgid "Make an Item from a Message"
 msgstr "Crea un elemento da un messaggio"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Make an app password in Mailflare (Settings › App passwords) and paste it below. Mail is sent from Mailflare's Drafts, as Mailflare does it."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/forms.rs
@@ -14498,6 +14523,11 @@ msgid "September"
 msgstr "settembre"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Server"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup.rs
 #, fuzzy
 msgid "Server Certificate"
@@ -15152,6 +15182,11 @@ msgstr "Accedi con Invia/Ricevi, poi modifica le risposte automatiche."
 #, fuzzy
 msgid "Sign in with Send/Receive to see when other people are busy."
 msgstr "Accedere con Invia/Ricevi per vedere quando gli altri sono occupati."
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Sign in with my password instead of a token"
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/lib.rs
@@ -16322,7 +16357,7 @@ msgid "The account could not be removed. It and its sign-in are still here. Try 
 msgstr "Impossibile rimuovere l'account. Esso e il relativo accesso sono ancora presenti. Riprova."
 
 #. interface
-#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs
+#: crates/ui-egui/src/account_setup.rs crates/ui-egui/src/account_setup/exchange.rs crates/ui-egui/src/account_setup/jmap.rs
 #, fuzzy
 msgid "The account couldn't be added"
 msgstr "Impossibile aggiungere l'account"
@@ -17542,6 +17577,11 @@ msgid "The server turned down the sign-in for {name}: sign in again"
 msgstr "Il server ha rifiutato l'accesso per {name}: accedi di nuovo"
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The server's address can't be used: it {why}."
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/account_setup/exchange.rs
 #, fuzzy
 msgid "The server's address must begin with https:// and name the server (https://mail.example.org/EWS/Exchange.asmx)"
@@ -17600,6 +17640,11 @@ msgstr "Le copie sul server restano invariate e nulla viene inviato al server. A
 #, fuzzy
 msgid "The server's name"
 msgstr "Il nome del server"
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "The server's name, or the address of its JMAP session (https://…)."
+msgstr ""
 
 #. interface
 #: crates/ui-egui/src/account_setup.rs
@@ -18439,6 +18484,11 @@ msgid "This invitation has the ID of a meeting on your calendar but names anothe
 msgstr "Questo invito ha l'ID di una riunione presente nel tuo calendario ma indica un altro organizzatore, quindi non può modificarla."
 
 #. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "This is a Mailflare server"
+msgstr ""
+
+#. interface
 #: crates/ui-egui/src/updates.rs
 #, fuzzy
 msgid "This is a development build: it checks only when you press Check for Updates."
@@ -19197,6 +19247,11 @@ msgstr "Oggi"
 #, fuzzy
 msgid "Today could not be read."
 msgstr "Non è stato possibile leggere Oggi."
+
+#. interface
+#: crates/ui-egui/src/account_setup/jmap.rs
+msgid "Token or app password"
+msgstr ""
 
 #. android, interface, name, ribbon
 #: apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/DueDates.kt apps/mailcraft-android/app/src/main/kotlin/work/mailcraft/android/TaskEditorScreen.kt crates/ui-egui/src/forms.rs crates/ui-egui/src/ribbon.rs crates/ui-egui/src/tasks_view.rs

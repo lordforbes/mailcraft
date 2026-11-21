@@ -119,7 +119,7 @@ pub use discovery::session_address;
 pub use error::{BuildError, Error, LimitName, RequestProblem, Unusable};
 pub use host::{Host, HostScope};
 pub use http::{HttpExchange, HttpRequest, HttpResponse, Method, RequestKind, TransportError};
-pub use id::{Id, IdError};
+pub use id::{Id, IdError, pointer_token};
 pub use mail::{failed_run, sync_mail};
 pub use redact::{Excerpt, Redactor};
 pub use request::{ApiRequest, CallId, ResultReference};

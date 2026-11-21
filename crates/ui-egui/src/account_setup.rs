@@ -21,6 +21,7 @@
 
 mod exchange;
 mod help;
+mod jmap;
 mod senders;
 
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -97,6 +98,8 @@ pub enum Page {
     ExchangeCertificate,
     /// The mailbox is in Microsoft 365: it is added as a Microsoft account.
     ExchangeOnline,
+    /// A JMAP server account (M6), Mailflare's among them: the server, and the token or password.
+    Jmap,
 }
 
 /// The kinds of account the owner can pick by hand.
@@ -113,16 +116,21 @@ pub enum Kind {
     Local,
     /// An Exchange server the owner's organisation runs itself (#252).
     Exchange,
+    /// A server that speaks JMAP (M6): Mailflare, Fastmail, Stalwart…
+    Jmap,
 }
 
 impl Kind {
     /// The kinds that have servers, in the order of their tiles.
     const HOSTED: [Kind; 6] = [Kind::Microsoft365, Kind::OutlookCom, Kind::Google, Kind::Yahoo, Kind::ICloud, Kind::Other];
 
-    /// The tiles of the Choose page: the kinds with servers, and the Exchange server (found from
-    /// the domain's Autodiscover records when it publishes them, and chosen here otherwise).
+    /// The tiles of the Choose page: the kinds with servers, a JMAP server, and the Exchange server
+    /// (found from the domain's Autodiscover records when it publishes them, and chosen here
+    /// otherwise), last.
     fn tiles() -> Vec<Kind> {
         let mut tiles = Kind::HOSTED.to_vec();
+        // (A JMAP server beside it: Mailflare, Fastmail, Stalwart…)
+        tiles.push(Kind::Jmap);
         tiles.push(Kind::Exchange);
         tiles
     }
@@ -135,7 +143,7 @@ impl Kind {
             Kind::Google => Some("google"),
             Kind::Yahoo => Some("yahoo"),
             Kind::ICloud => Some("icloud"),
-            Kind::Other | Kind::Local | Kind::Exchange => None,
+            Kind::Other | Kind::Local | Kind::Exchange | Kind::Jmap => None,
         }
     }
 
@@ -149,6 +157,7 @@ impl Kind {
             Kind::Other => "Other (IMAP)",
             Kind::Local => "This device only",
             Kind::Exchange => "Exchange server (your organisation's own)",
+            Kind::Jmap => "JMAP server",
         }
     }
 
@@ -162,6 +171,7 @@ impl Kind {
             Kind::Other => "Any other mail server",
             Kind::Local => "A mailbox kept here, with no mail server",
             Kind::Exchange => "A mail server your organisation runs itself",
+            Kind::Jmap => "Mailflare, Fastmail, Stalwart and others",
         }
     }
 
@@ -170,7 +180,7 @@ impl Kind {
         match self {
             Kind::Microsoft365 => "work",
             Kind::OutlookCom | Kind::Google | Kind::Yahoo | Kind::ICloud => "mail",
-            Kind::Other | Kind::Exchange => "server",
+            Kind::Other | Kind::Exchange | Kind::Jmap => "server",
             Kind::Local => "device",
         }
     }
@@ -559,6 +569,8 @@ pub struct AccountSetup {
     reveal: bool,
     /// What the Exchange server pages keep (#252).
     exchange: exchange::Exchange,
+    /// What the JMAP server page keeps (M6).
+    jmap: jmap::Jmap,
     /// The settings are of an Exchange server account: where it connects is shown, not changed.
     ews: Option<mailcraft_model::EwsServer>,
 }
@@ -668,6 +680,7 @@ impl AccountSetup {
             ctx: None,
             reveal: false,
             exchange: Default::default(),
+            jmap: Default::default(),
             ews: None,
         }
     }
@@ -1041,6 +1054,9 @@ impl AccountSetup {
         if let Some(close) = self.act_exchange(app, action) {
             return close;
         }
+        if let Some(close) = self.act_jmap(app, action) {
+            return close;
+        }
         match (self.page, action) {
             (Page::Address, Action::Go) => self.connect(app),
             (Page::Detecting, Action::Back) => {
@@ -1285,6 +1301,14 @@ impl AccountSetup {
 
     /// A tile of the Choose page.
     fn pick(&mut self, app: &mut MailApp, kind: Kind) {
+        if kind == Kind::Jmap {
+            if address(&self.email).is_none() {
+                self.error = self.not_an_address();
+                return;
+            }
+            self.jmap_page_from();
+            return;
+        }
         if kind == Kind::Exchange {
             // (The address typed already is the account's; nothing is sent yet.)
             if address(&self.email).is_none() {
@@ -1974,6 +1998,7 @@ impl AccountSetup {
             Page::ExchangeConsent => self.exchange_consent(ui, &pass),
             Page::ExchangeCertificate => self.exchange_certificate(ui, &pass),
             Page::ExchangeOnline => self.exchange_online(ui, &pass),
+            Page::Jmap => self.jmap_form(app, ui, &mut pass),
         };
         action.is_some_and(|action| self.act(app, action))
     }

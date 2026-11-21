@@ -1239,7 +1239,7 @@ mod tests {
     #[test]
     fn a_jmap_account_answers_and_forwards_a_meeting_by_mail() {
         let mut s = Session::at(crate::sample::mailbox(now(), 0), now(), 0);
-        let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true };
+        let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true, ..Default::default() };
         let jmap = mailcraft_model::Account {
             name: "Ada".into(),
             email: "ada@example.org".into(),

@@ -21,7 +21,7 @@ const JMAP: &str = "ada@jmap.example";
 fn mailbox() -> (Session, Id, Id, Id) {
     let mut mb = Mailbox::with_local_account("Ada Lovelace", "ada@example.org");
     let local = mb.accounts[0].id;
-    let server = JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true };
+    let server = JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true, ..Default::default() };
     let jmap = mb.add_account(Account { email: JMAP.into(), kind: AccountKind::Jmap, jmap: Some(server), ..Default::default() });
     let mut s = Session::new(mb);
     let imap = s.run("account.add", &json!({"email": "ada@imap.example", "incoming": {"host": "imap.example.org"}})).unwrap()["id"].as_u64().unwrap();

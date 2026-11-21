@@ -277,6 +277,50 @@ fn sync_graph(s: &mut Session, account: mailcraft_model::Id, path: &str) -> Resu
     if failed { Err(Failure::Error("sync: finished with errors".into())) } else { Ok(()) }
 }
 
+/// A Send/Receive of the JMAP account `account` (M6): what was changed here goes up, what waits in
+/// its Outbox is sent, and its mailboxes and their newest mail come down, and the mailbox file at
+/// `path` is saved with it. The secret comes from the environment, never from the command line
+/// (which other users can list): `MAILCRAFT_JMAP_TOKEN` for an account whose server takes a bearer
+/// token (a Mailflare API key with the `jmap` scope, say), else `MAILCRAFT_PASSWORD`.
+fn sync_jmap(s: &mut Session, account: mailcraft_model::Id, path: &str) -> Result<(), Failure> {
+    let asked = s.run("sync.jmapRequest", &json!({"account": account}))?;
+    let request: mailcraft_model::sync::JmapMailRequest = serde_json::from_value(asked).map_err(|e| format!("sync: {e}"))?;
+    let (variable, what) = if request.bearer { ("MAILCRAFT_JMAP_TOKEN", "token") } else { ("MAILCRAFT_PASSWORD", "password") };
+    let secret = std::env::var(variable).map_err(|_| format!("sync: set {variable} to the account's {what}"))?;
+    // What goes is marked as being sent, on disk, before it leaves: a message whose answer is lost is
+    // held at the next run, never sent again by itself.
+    let going: Vec<mailcraft_model::Id> = request.sends.iter().map(|up| up.message).collect();
+    if s.send_marking(account, &going).is_some() {
+        s.run("file.save", &json!({"path": path}))?;
+    }
+    let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let mut failed = false;
+    let mut applied = Vec::new();
+    let mut taken: Result<(), Failure> = Ok(());
+    mailcraft_host::jmap::run_mail_with(&request, &secret, &cancel, &mut |piece| {
+        if taken.is_err() {
+            return;
+        }
+        if !piece.partial {
+            failed = !piece.errors.is_empty();
+            for e in &piece.errors {
+                eprintln!("sync: {e}");
+            }
+        }
+        match mailcraft_engine::cmd::jmap_mail::apply_jmap_mail(s, piece) {
+            Ok(said) => applied.push(said),
+            Err(e) => {
+                taken = Err(e.into());
+                cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+            }
+        }
+    });
+    taken?;
+    s.run("file.save", &json!({"path": path}))?;
+    print_json(&Value::Array(applied))?;
+    if failed { Err(Failure::Error("sync: finished with errors".into())) } else { Ok(()) }
+}
+
 fn print_json(v: &Value) -> Result<(), Failure> {
     let text = serde_json::to_string_pretty(v).unwrap_or_default();
     write_stdout(|o| writeln!(o, "{text}"))
@@ -473,15 +517,13 @@ fn run(args: &[String]) -> Result<(), Failure> {
                     .find(|a| a.email.eq_ignore_ascii_case(&email))
                     .map(|a| a.id)
                     .ok_or_else(|| format!("sync: no account {email} in {path}"))?,
-                // An account a run is made for before a JMAP account, for which none is made here
-                // yet (and the engine says so when it is the only one).
+                // An account a run is made for before an Exchange server account, for which none is
+                // made here yet (and the engine says so when it is the only one).
                 None => {
                     let accounts = &s.mailbox.accounts;
                     accounts
                         .iter()
-                        .find(|a| {
-                            a.kind.has_server() && !matches!(a.kind, mailcraft_model::AccountKind::Jmap | mailcraft_model::AccountKind::Exchange)
-                        })
+                        .find(|a| a.kind.has_server() && !matches!(a.kind, mailcraft_model::AccountKind::Exchange))
                         .or_else(|| accounts.iter().find(|a| a.kind.has_server()))
                         .map(|a| a.id)
                         .ok_or("sync: no account in this mailbox is connected to a mail server")?
@@ -491,6 +533,10 @@ fn run(args: &[String]) -> Result<(), Failure> {
             // its folders, through Graph alone.
             if s.mailbox.account(account).is_some_and(|a| a.kind == mailcraft_model::AccountKind::Microsoft) {
                 return sync_graph(&mut s, account, path);
+            }
+            // A JMAP account (M6), Mailflare's among them: over HTTPS, through `mailcraft-jmap`.
+            if s.mailbox.account(account).is_some_and(|a| a.kind == mailcraft_model::AccountKind::Jmap) {
+                return sync_jmap(&mut s, account, path);
             }
             let mut request = mailcraft_engine::cmd::account::sync_request(&s, account)?;
             // Secrets come from the environment or a sign-in, never from the command line (which
@@ -772,17 +818,17 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    /// A JMAP account (M6): `sync` makes no run of one yet. As the only account with a server, or
-    /// named, it is refused with its reason before anything is asked of a server, and the mailbox
-    /// file is left as it was.
+    /// A JMAP account (M6): `sync` runs one, with its secret from the environment only. Without
+    /// it (as here: the tests set none), as the only account with a server or named, it is refused
+    /// with what to set before anything is asked of a server, and the mailbox file is left as it was.
     #[test]
-    fn sync_makes_no_run_of_a_jmap_account_yet() {
+    fn sync_of_a_jmap_account_asks_for_its_token_in_the_environment() {
         let dir = std::env::temp_dir().join(format!("mailcraft-cli-jmap-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("jmap.mailcraft").to_string_lossy().to_string();
         let mut mb = Mailbox::with_local_account("Ada Lovelace", "ada@example.org");
-        let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true };
+        let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true, ..Default::default() };
         let jmap = mailcraft_model::Account {
             email: "ada@jmap.example".into(),
             kind: mailcraft_model::AccountKind::Jmap,
@@ -794,7 +840,7 @@ mod tests {
         std::fs::write(&path, &bytes).unwrap();
         let refusal = |args: &[&str]| run(&strings(args)).unwrap_err().to_string();
         let (alone, named) = (refusal(&["sync", &path]), refusal(&["sync", &path, "--account", "ada@jmap.example"]));
-        let reason = "ada@jmap.example is a JMAP account, and this version doesn't send and receive with one yet";
+        let reason = "sync: set MAILCRAFT_JMAP_TOKEN to the account's token";
         assert!(alone.contains(reason) && named.contains(reason), "{alone} / {named}");
         assert_eq!(std::fs::read(&path).unwrap(), bytes);
         let _ = std::fs::remove_dir_all(&dir);

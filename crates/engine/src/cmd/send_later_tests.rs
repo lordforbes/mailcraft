@@ -452,7 +452,7 @@ fn a_delayed_message_is_in_no_kind_of_runs_request_before_its_time() {
         .as_u64()
         .unwrap();
     s.mailbox.account_mut(exchange).unwrap().ews.as_mut().unwrap().trusted = "ab".repeat(32);
-    let server = JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true };
+    let server = JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true, ..Default::default() };
     let jmap = s.mailbox.add_account(Account { email: "ada@jmap.example".into(), kind: AccountKind::Jmap, jmap: Some(server), ..Default::default() });
     for (account, name) in [(microsoft, "Microsoft"), (exchange, "Exchange"), (jmap, "JMAP")] {
         let id = send_after(&mut s, account, name, 600);

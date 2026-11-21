@@ -19,6 +19,8 @@ mailcraft-model = { workspace = true }
 mailcraft-engine = { workspace = true }
 mailcraft-mcp = { workspace = true }
 mailcraft-net = { workspace = true }
+# JMAP accounts (M6), Mailflare's among them: their Send/Receive over this computer's sockets.
+mailcraft-host = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]

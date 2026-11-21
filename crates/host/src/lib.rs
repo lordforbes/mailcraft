@@ -15,8 +15,11 @@ pub mod fetch;
 mod fetch_tests;
 pub mod graph;
 pub mod init;
+// A JMAP account over this computer's sockets (M6); the browser build has `fetch` for it instead.
 #[cfg(test)]
 mod init_tests;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod jmap;
 pub mod job_sign_in;
 #[cfg(test)]
 mod job_sign_in_run_tests;

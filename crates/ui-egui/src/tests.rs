@@ -2363,7 +2363,7 @@ fn a_jmap_account_is_left_out_of_send_receive_until_one_can_be_run() {
     }));
     let servers = json!({"email": "ada@imap.example", "incoming": {"host": "imap.example.org"}});
     let imap = a.execute("account.add", servers).unwrap()["id"].as_u64().unwrap();
-    let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true };
+    let server = mailcraft_model::JmapServer { session: "https://jmap.example/.well-known/jmap".into(), bearer: true, ..Default::default() };
     let jmap = mailcraft_model::Account {
         email: "ada@jmap.example".into(),
         kind: mailcraft_model::AccountKind::Jmap,

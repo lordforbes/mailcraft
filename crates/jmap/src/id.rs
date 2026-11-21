@@ -3,9 +3,14 @@
 //! JMAP ids (RFC 8620 §1.2).
 //!
 //! An id is 1 to [`MAX_ID_LEN`] octets of the URL-safe base64 alphabet of RFC 4648 §5 without padding:
-//! `A-Z a-z 0-9 - _`. Every id received from a server goes through [`Id::new`] before it is used as a JSON
-//! key, in an address or in a later request. The maximum is the specification's own: RFC 8620 §1.2 allows
-//! 255 octets and nothing in a mail client needs to refuse a conforming server's ids.
+//! `A-Z a-z 0-9 - _`, and, beyond what RFC 8620 §1.2 allows, the `~ . @ + =` some servers put in theirs
+//! (Mailflare: `<mailbox>~<role>`, `msg~<id>`, identities ending in an address), never `.` or `..` alone
+//! ([`mailcraft_model::is_jmap_id`] is the one rule, for what the model keeps too). None of them is a
+//! space, a quote, a slash, a backslash, a `%` or a control character. Every id received from a server goes
+//! through [`Id::new`] before it is used as a JSON key, in an address (percent-encoded) or in a later
+//! request; one that names a property in a patch is escaped as a JSON Pointer token ([`pointer_token`]).
+//! The maximum is the specification's own: RFC 8620 §1.2 allows 255 octets and nothing in a mail client
+//! needs to refuse a conforming server's ids.
 
 use std::fmt;
 use std::str::FromStr;
@@ -20,7 +25,7 @@ pub enum IdError {
     Empty,
     /// The id is longer than [`MAX_ID_LEN`] octets.
     TooLong,
-    /// The id holds a character outside `A-Z a-z 0-9 - _`.
+    /// The id holds a character outside `A-Z a-z 0-9 - _ ~ . @ + =`, or is `.` or `..`.
     InvalidCharacter,
 }
 
@@ -29,7 +34,9 @@ impl fmt::Display for IdError {
         f.write_str(match self {
             Self::Empty => "the id is empty, but a JMAP id has 1 to 255 characters",
             Self::TooLong => "the id is longer than 255 octets, the most a JMAP id may have",
-            Self::InvalidCharacter => "the id contains a character other than letters, digits, - and _, the only ones a JMAP id may hold",
+            Self::InvalidCharacter => {
+                "the id contains a character other than letters, digits and - _ ~ . @ + =, the only ones a JMAP id may hold here"
+            }
         })
     }
 }
@@ -49,7 +56,7 @@ impl Id {
         if text.len() > MAX_ID_LEN {
             return Err(IdError::TooLong);
         }
-        if !text.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_') {
+        if !mailcraft_model::is_jmap_id(text) {
             return Err(IdError::InvalidCharacter);
         }
         Ok(Self(text.to_owned()))
@@ -59,6 +66,16 @@ impl Id {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+}
+
+/// `token` as one reference token of a JSON Pointer (RFC 6901 §3), as a patch names a property of an
+/// object by it (RFC 8620 §5.3, `mailboxIds/<id>`, `keywords/<keyword>`): `~` written `~0` and `/` written
+/// `~1`, everything else as it is.
+pub fn pointer_token(token: &str) -> String {
+    if !token.contains(['~', '/']) {
+        return token.to_owned();
+    }
+    token.replace('~', "~0").replace('/', "~1")
 }
 
 impl FromStr for Id {
