@@ -811,3 +811,32 @@ fn the_host_side_of_a_jmap_run_is_never_an_agents() {
     assert!(!s.enabled("sync.jmapRequest") && !s.enabled("sync.jmapFetchRequest"));
     assert_eq!(s.run("sync.jmapRequest", &json!({})).unwrap_err().to_string(), "not available: no account is kept in step over JMAP");
 }
+
+/// A Mailflare account kept before its container mailbox was left out of the listing: the next
+/// listing (the Inbox and its fellows at the top) puts them at the top here too, and the container
+/// goes, with the second copy of every message it held; the Inbox keeps its own.
+#[test]
+fn a_container_left_out_of_the_listing_puts_its_folders_at_the_top() {
+    let (mut s, account) = session();
+    let nested = vec![
+        folder("mf1", "", "chris <chris@delite.example>", FolderKind::Custom),
+        folder("mf1~inbox", "mf1", "Inbox", FolderKind::Inbox),
+        folder("mf1~sent", "mf1", "Sent", FolderKind::Sent),
+        folder("mf1~f~10", "mf1", "Projects", FolderKind::Custom),
+    ];
+    apply_jmap_mail(&mut s, JmapMailResult { listing: Some(FolderListing { folders: nested.clone(), complete: true }), ..piece(account) }).unwrap();
+    apply_jmap_mail(&mut s, JmapMailResult { pages: vec![window("mf1", vec![email("E1", "Hello", 1)], true)], ..piece(account) }).unwrap();
+    apply_jmap_mail(&mut s, JmapMailResult { pages: vec![window("mf1~inbox", vec![email("E1", "Hello", 1)], true)], ..piece(account) }).unwrap();
+    apply_jmap_mail(&mut s, JmapMailResult { whole: true, partial: false, ..piece(account) }).unwrap();
+    let inbox = folder_here(&s, account, "mf1~inbox");
+    assert!(s.mailbox.folder(inbox).unwrap().parent.is_some());
+    // The listing as it is now: no container, everything at the top.
+    let flat: Vec<GraphFolder> = nested.into_iter().filter(|f| f.id != "mf1").map(|f| GraphFolder { parent: String::new(), ..f }).collect();
+    apply_jmap_mail(&mut s, JmapMailResult { listing: Some(FolderListing { folders: flat, complete: true }), ..piece(account) }).unwrap();
+    for server in ["mf1~inbox", "mf1~sent", "mf1~f~10"] {
+        assert_eq!(s.mailbox.folder(folder_here(&s, account, server)).unwrap().parent, None, "{server}");
+    }
+    assert!(s.mailbox.folder_by_server(account, "mf1").is_none());
+    let copies: Vec<Id> = s.mailbox.messages.values().filter(|m| m.account == account && m.subject == "Hello").map(|m| m.folder).collect();
+    assert_eq!(copies, vec![inbox]);
+}
